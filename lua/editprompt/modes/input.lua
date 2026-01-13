@@ -9,10 +9,10 @@ local function execute_input(flag)
   utils.save_buffer()
   local content = utils.get_buffer_content()
 
-  local cmd = config.get_cmd()
-  local args = vim.list_extend(cmd, { "input", flag, "--", content })
+  local args = vim.deepcopy(config.get_cmd())
+  vim.list_extend(args, { "input", flag, "--", content })
 
-  vim.system(args, {}, function(result)
+  vim.system(args, { text = true }, function(result)
     vim.schedule(function()
       if result.code == 0 then
         utils.clear_buffer()

@@ -60,10 +60,10 @@ end
 --- Execute stash pop with selected key
 ---@param key string
 local function execute_pop(key)
-  local cmd = config.get_cmd()
-  local args = vim.list_extend(cmd, { "stash", "pop", "--key", key })
+  local args = vim.deepcopy(config.get_cmd())
+  vim.list_extend(args, { "stash", "pop", "--key", key })
 
-  vim.system(args, {}, function(result)
+  vim.system(args, { text = true }, function(result)
     vim.schedule(function()
       if result.code == 0 then
         local output = result.stdout or ""
@@ -127,10 +127,10 @@ function M.push()
     return
   end
 
-  local cmd = config.get_cmd()
-  local args = vim.list_extend(cmd, { "stash", "push", "--", content })
+  local args = vim.deepcopy(config.get_cmd())
+  vim.list_extend(args, { "stash", "push", "--", content })
 
-  vim.system(args, {}, function(result)
+  vim.system(args, { text = true }, function(result)
     vim.schedule(function()
       if result.code == 0 then
         utils.clear_buffer()
@@ -145,10 +145,10 @@ end
 
 --- Pop stash with picker
 function M.pop()
-  local cmd = config.get_cmd()
-  local args = vim.list_extend(cmd, { "stash", "list" })
+  local args = vim.deepcopy(config.get_cmd())
+  vim.list_extend(args, { "stash", "list" })
 
-  vim.system(args, {}, function(result)
+  vim.system(args, { text = true }, function(result)
     vim.schedule(function()
       if result.code ~= 0 then
         local err_msg = result.stderr or "Unknown error"

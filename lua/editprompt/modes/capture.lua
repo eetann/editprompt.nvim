@@ -7,10 +7,10 @@ local M = {}
 function M.execute()
   utils.save_buffer()
 
-  local cmd = config.get_cmd()
-  local args = vim.list_extend(cmd, { "dump" })
+  local args = vim.deepcopy(config.get_cmd())
+  vim.list_extend(args, { "dump" })
 
-  vim.system(args, {}, function(result)
+  vim.system(args, { text = true }, function(result)
     vim.schedule(function()
       if result.code == 0 then
         local output = result.stdout or ""
