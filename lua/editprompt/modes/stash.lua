@@ -1,47 +1,13 @@
 local config = require("editprompt.config")
+local utils = require("editprompt.utils")
 
 local M = {}
-
---- Get buffer content as string
----@return string
-local function get_buffer_content()
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-  return table.concat(lines, "\n")
-end
 
 --- Check if content is whitespace only
 ---@param content string
 ---@return boolean
 local function is_whitespace_only(content)
   return content:match("^%s*$") ~= nil
-end
-
---- Clear buffer and save
-local function clear_buffer()
-  vim.api.nvim_buf_set_lines(0, 0, -1, false, {})
-  vim.cmd("update")
-end
-
---- Check if buffer is empty
----@return boolean
-local function is_buffer_empty()
-  local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
-  return #lines == 0 or (#lines == 1 and lines[1] == "")
-end
-
---- Insert content into buffer
----@param content string
-local function insert_to_buffer(content)
-  local new_lines = vim.split(content, "\n", { plain = true })
-
-  if is_buffer_empty() then
-    vim.api.nvim_buf_set_lines(0, 0, -1, false, new_lines)
-  else
-    local line_count = vim.api.nvim_buf_line_count(0)
-    local lines_to_add = { "" }
-    vim.list_extend(lines_to_add, new_lines)
-    vim.api.nvim_buf_set_lines(0, line_count, line_count, false, lines_to_add)
-  end
 end
 
 --- Format ISO8601 date for display
@@ -102,7 +68,7 @@ local function execute_pop(key)
       if result.code == 0 then
         local output = result.stdout or ""
         output = output:gsub("\n$", "")
-        insert_to_buffer(output)
+        utils.insert_to_buffer(output)
         vim.notify("Stash popped", vim.log.levels.INFO)
       else
         local err_msg = result.stderr or "Unknown error"
@@ -154,7 +120,7 @@ end
 
 --- Push current buffer content to stash
 function M.push()
-  local content = get_buffer_content()
+  local content = utils.get_buffer_content()
 
   if is_whitespace_only(content) then
     vim.notify("Buffer is empty", vim.log.levels.WARN)
@@ -167,7 +133,7 @@ function M.push()
   vim.system(args, {}, function(result)
     vim.schedule(function()
       if result.code == 0 then
-        clear_buffer()
+        utils.clear_buffer()
         vim.notify("Stash pushed", vim.log.levels.INFO)
       else
         local err_msg = result.stderr or "Unknown error"
