@@ -15,8 +15,8 @@ end
 --- @return string formatted date
 function M.format_date(iso_date)
   -- Parse ISO8601 date
-  local year, month, day, hour, min =
-    iso_date:match("(%d+)-(%d+)-(%d+)T(%d+):(%d+)")
+  local year, month, day, hour, min, sec =
+    iso_date:match("(%d+)-(%d+)-(%d+)T(%d+):(%d+):(%d+)")
   if not year then
     return iso_date
   end
@@ -28,9 +28,9 @@ function M.format_date(iso_date)
     and tonumber(day) == today.day
 
   if is_today then
-    return string.format("%s:%s", hour, min)
+    return string.format("%s:%s:%s", hour, min, sec)
   else
-    return string.format("%s-%s-%s %s:%s", year, month, day, hour, min)
+    return string.format("%s-%s-%s %s:%s:%s", year, month, day, hour, min, sec)
   end
 end
 

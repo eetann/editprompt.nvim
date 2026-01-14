@@ -1,8 +1,8 @@
 # mise watch test
 [tasks.test]
 run = "nvim --headless --noplugin -u ./scripts/test/minimal_init.lua -c 'lua MiniTest.run()'"
-sources = ["lua/**/*.lua", "tests/**/*"]
-outputs = []
+# sources = ["lua/**/*.lua", "tests/**/*"]
+# outputs = []
 
 [tasks.launch]
 run = "nvim --noplugin -u ./scripts/test/minimal_init.lua"
