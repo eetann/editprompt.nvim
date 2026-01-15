@@ -42,11 +42,11 @@ local subcmd_tbl = {
   --[=[@doc
   category = "command"
   name = "stash"
-  desc = "Stash operations (push/pop)"
+  desc = "Stash operations (push/pop/drop)"
 
   [[args]]
-  name = "push|pop"
-  desc = "push: save buffer to stash, pop: restore from stash"
+  name = "push|pop|drop"
+  desc = "push: save buffer to stash, pop: restore from stash, drop: delete from stash"
   --]=]
   stash = {
     impl = function(args)
@@ -55,6 +55,8 @@ local subcmd_tbl = {
         require("editprompt.modes.stash").push()
       elseif subcmd == "pop" then
         require("editprompt.modes.stash").pop()
+      elseif subcmd == "drop" then
+        require("editprompt.modes.stash").drop()
       else
         vim.notify(
           "Editprompt: Unknown stash command: " .. (subcmd or ""),
@@ -63,7 +65,7 @@ local subcmd_tbl = {
       end
     end,
     complete = function(subcmd_arg_lead)
-      return CommandRegister.get_complete(subcmd_arg_lead, { "push", "pop" })
+      return CommandRegister.get_complete(subcmd_arg_lead, { "push", "pop", "drop" })
     end,
   },
 }

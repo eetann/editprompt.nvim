@@ -1,5 +1,7 @@
+---@doc.type
 ---@alias editprompt.PickerType "native" | "snacks"
 
+---@doc.type
 ---@class editprompt.Config
 ---@field cmd string|string[] editprompt CLI command
 ---@field picker editprompt.PickerType picker to use (auto-detected on setup)
@@ -39,6 +41,17 @@ end
 --- Reset configuration to default (for testing)
 function M._reset()
   config = vim.deepcopy(default_config)
+end
+
+--- Format default config for documentation
+---@return string
+function M._format_default()
+  local lines = { "```lua" }
+  for line in vim.gsplit(vim.inspect(default_config), "\n") do
+    table.insert(lines, line)
+  end
+  table.insert(lines, "```")
+  return table.concat(lines, "\n")
 end
 
 return M

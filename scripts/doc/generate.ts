@@ -1,0 +1,437 @@
+#!/usr/bin/env bun
+// https://github.com/hrsh7th/nvim-deck/blob/main/scripts/docs.ts
+import { spawn } from "node:child_process";
+import { globSync } from "node:fs";
+import { readFile, writeFile } from "node:fs/promises";
+import path from "node:path";
+import { dedent } from "@qnighy/dedent";
+import toml from "toml";
+import {
+  type InferOutput,
+  array,
+  literal,
+  object,
+  optional,
+  parse as parseSchema,
+  string,
+  union,
+} from "valibot";
+
+const pluginCommand = "Editprompt";
+
+// command example
+// --[=[@doc
+// category = "command"
+// name = "echoHello"
+// desc = "detail -> |foo-echo-hello|"
+//
+// [[args]]
+// name = "lang"
+// desc = "language"
+// --]=]
+//
+// ->
+// <!-- auto-generate-s:command -->
+// HERE
+// <!-- auto-generate-e:command -->
+
+// api example
+// --[=[@doc
+//   category = "api"
+//   name = "delete_thread"
+//   desc = """
+// ```lua
+// foo.delete_thread(thread_id)
+// ```
+// Delete the specified thread.
+// """
+//
+//   [[args]]
+//   name = "thread_id"
+//   type = "string"
+//   desc = "thread_id"
+// --]=]
+//
+// ->
+// <!-- auto-generate-s:api -->
+// HERE
+// <!-- auto-generate-e:api -->
+
+const DocSchema = union([
+  object({
+    category: literal("type"),
+    name: string(),
+    definition: string(),
+  }),
+  object({
+    category: literal("source"),
+    name: string(),
+    desc: string(),
+    options: optional(
+      array(
+        object({
+          name: string(),
+          type: string(),
+          default: optional(string()),
+          desc: optional(string()),
+        }),
+      ),
+    ),
+    example: optional(string()),
+  }),
+  object({
+    category: literal("command"),
+    name: string(),
+    args: optional(
+      array(
+        object({
+          name: string(),
+          desc: string(),
+        }),
+      ),
+    ),
+    desc: string(),
+  }),
+  object({
+    category: literal("autocmd"),
+    name: string(),
+    desc: string(),
+  }),
+  object({
+    category: literal("api"),
+    name: string(),
+    args: optional(
+      array(
+        object({
+          name: string(),
+          type: string(),
+          desc: string(),
+        }),
+      ),
+    ),
+    desc: string(),
+  }),
+]);
+type Doc = InferOutput<typeof DocSchema>;
+
+const rootDir = process.cwd();
+
+/**
+ * Parse all the documentation from the Lua files.
+ */
+async function main() {
+  const docs = [] as Doc[];
+
+  // 見つかった各.luaファイルを処理
+  for (const filePath of globSync("**/*.lua")) {
+    const foundDocs = await getDocs(filePath);
+    docs.push(...foundDocs);
+  }
+
+  docs.sort((a, b) => {
+    if (a.category !== b.category) {
+      return a.category.localeCompare(b.category);
+    }
+    return a.name.localeCompare(b.name);
+  });
+
+  let texts = (await readFile(path.join(rootDir, "README.md")))
+    .toString()
+    .split("\n");
+
+  const defaultConfitText = await getDefaultConfig();
+  texts = replace(
+    texts,
+    "<!-- auto-generate-s:default_config -->",
+    "<!-- auto-generate-e:default_config -->",
+    defaultConfitText,
+  );
+
+  texts = replace(
+    texts,
+    "<!-- auto-generate-s:api -->",
+    "<!-- auto-generate-e:api -->",
+    docs.filter((doc) => doc.category === "api").map(renderApiDoc),
+  );
+
+  texts = replace(
+    texts,
+    "<!-- auto-generate-s:command -->",
+    "<!-- auto-generate-e:command -->",
+    docs.filter((doc) => doc.category === "command").map(renderCommandDoc),
+  );
+
+  texts = replace(
+    texts,
+    "<!-- auto-generate-s:type -->",
+    "<!-- auto-generate-e:type -->",
+    docs.filter((doc) => doc.category === "type").map(renderTypeDoc),
+  );
+
+  const filePath = path.resolve(rootDir, "README.md");
+  await writeFile(filePath, texts.join("\n"), "utf-8");
+}
+
+/**
+ * render chat action documentation.
+ */
+function renderChatActionDoc(doc: Doc & { category: "chat_action" }) {
+  return dedent`
+    - \`${doc.name}\`
+      - ${doc.desc}
+      - default: ${doc.default_key ?? "none"}`;
+}
+
+/**
+ * render source documentation.
+ */
+function renderSourceDoc(doc: Doc & { category: "source" }) {
+  let options = "_No options_";
+  if (doc.options && doc.options.length > 0) {
+    options = dedent`
+    | Name | Type | Default |Description|
+    |------|------|---------|-----------|
+    ${doc.options
+      .map(
+        (option) =>
+          `| ${escapeTable(option.name)} | ${escapeTable(option.type)} | ${escapeTable(
+            option.default ?? "",
+          )} | ${escapeTable(option.desc ?? "")} |`,
+      )
+      .join("\n")}
+    `;
+  }
+
+  let example = "";
+  if (doc.example) {
+    example = dedent`
+    \`\`\`lua
+    ${doc.example}
+    \`\`\`
+    `;
+  }
+
+  return dedent`
+  ### ${doc.name}
+
+  ${doc.desc}
+
+  ${options}
+
+  ${example}
+  `;
+}
+
+/**
+ * render autocmd documentation.
+ */
+function renderAutocmdDoc(doc: Doc & { category: "autocmd" }) {
+  return dedent`
+    - \`${doc.name}\`
+      - ${doc.desc}
+  `;
+}
+
+/**
+ * render api documentation.
+ */
+function renderApiDoc(doc: Doc & { category: "api" }) {
+  let args = "_No arguments_";
+  if (doc.args && doc.args.length > 0) {
+    args = dedent`
+    | Name | Type | Description |
+    |------|------|-------------|
+    ${doc.args
+      .map(
+        (arg) =>
+          `| ${escapeTable(arg.name)} | ${escapeTable(arg.type)} | ${escapeTable(
+            arg.desc,
+          )} |`,
+      )
+      .join("\n")}
+    `;
+  }
+
+  return dedent`
+  ### ${doc.name}
+  ${doc.desc}
+  ${args}
+  &nbsp;
+  `;
+}
+
+/**
+ * render api documentation.
+ */
+function renderCommandDoc(doc: Doc & { category: "command" }) {
+  let args = "_No arguments_";
+  if (doc.args && doc.args.length > 0) {
+    args = dedent`
+    | Name | Description |
+    |------|-------------|
+    ${doc.args
+      .map((arg) => `| ${escapeTable(arg.name)} | ${escapeTable(arg.desc)} |`)
+      .join("\n")}
+    `;
+  }
+
+  return dedent`
+  ### ${doc.name}
+  \`\`\`
+  :${pluginCommand} ${doc.name}
+  \`\`\`
+
+  ${doc.desc}
+
+  ${args}
+  &nbsp;
+  `;
+}
+
+/**
+ * render type documentation.
+ */
+function renderTypeDoc(doc: Doc & { category: "type" }) {
+  return dedent`
+  \`*${doc.name}*\`
+  \`\`\`lua
+  ${doc.definition}
+  \`\`\`
+  `;
+}
+
+/**
+ * Parse the documentation from a Lua file.
+ * The documentation format is Lua's multi-line comment with JSON inside.
+ * @example
+ * --[=[@doc
+ *   category = "source"
+ *   name = "recent_files"
+ * --]]
+ */
+async function getDocs(path: string) {
+  const body = (await readFile(path)).toString();
+
+  const docs = [] as Doc[];
+  const lines = body.split("\n");
+
+  // Parse the documentation.
+  {
+    const state = { body: null as string | null };
+    for (const line of lines) {
+      if (/^\s*--\[=\[\s*@doc$/.test(line)) {
+        state.body = "";
+      } else if (state.body !== null && /^\s*(--)?\]=\]$/.test(line)) {
+        try {
+          docs.push(parseSchema(DocSchema, toml.parse(state.body)));
+        } catch (e) {
+          console.error(`Error parsing doc in ${path}: ${state.body}`);
+          throw e;
+        }
+        state.body = null;
+      } else if (typeof state.body === "string") {
+        state.body += `${line}\n`;
+      }
+    }
+  }
+
+  // Parse the @doc.type
+  {
+    const state = { body: null as string | null };
+    for (const line of lines) {
+      if (/^\s*---@doc\.type$/.test(line)) {
+        state.body = "";
+      } else if (state.body !== null && /^$/.test(line)) {
+        const definition = state.body.trim();
+        if (definition) {
+          let name = definition.match(/@class\s+([^:\n]+)/)?.[1];
+          if (name) {
+            docs.push({
+              category: "type",
+              name: name,
+              definition: definition,
+            });
+          }
+          name = definition.match(/@alias\s+([^:\n]+)/)?.[1];
+          if (name) {
+            docs.push({
+              category: "type",
+              name: name,
+              definition: definition,
+            });
+          }
+        }
+        state.body = null;
+      } else if (typeof state.body === "string") {
+        state.body += `${line.trim()}\n`;
+      }
+    }
+  }
+
+  return docs;
+}
+
+/**
+ * Replace the text between the start and end markers.
+ */
+function replace(
+  texts: string[],
+  startMarker: string,
+  endMarker: string,
+  replacements: string[],
+) {
+  const start = texts.findIndex((line) => line === startMarker);
+  const end = texts.findIndex((line) => line === endMarker);
+  if (start === -1 || end === -1) {
+    return texts;
+  }
+
+  return [...texts.slice(0, start + 1), ...replacements, ...texts.slice(end)];
+}
+
+/**
+ * Escape the table syntax.
+ */
+function escapeTable(s: string) {
+  return s.replace(/(\|)/g, "\\$1");
+}
+
+async function getDefaultConfig(): Promise<string[]> {
+  return new Promise((resolve, reject) => {
+    const proc = spawn(
+      "nvim",
+      [
+        "--headless",
+        "--noplugin",
+        "-u",
+        "./scripts/doc/minimal_init.lua",
+        "-c",
+        "qa",
+      ],
+      {
+        stdio: ["ignore", "pipe", "pipe"], // stdin, stdout, stderr
+      },
+    );
+
+    let stdout = "";
+    let stderr = "";
+
+    proc.stdout.on("data", (data) => {
+      stdout += data.toString();
+    });
+
+    proc.stderr.on("data", (data) => {
+      stderr += data.toString();
+    });
+
+    proc.on("close", (exitCode) => {
+      if (exitCode !== 0) {
+        reject(new Error(`getDefaultConfig failed: ${stderr}`));
+      } else {
+        resolve(stdout.split("\n"));
+      }
+    });
+  });
+}
+
+main().catch(console.error);

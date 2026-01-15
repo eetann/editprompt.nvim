@@ -1,0 +1,185 @@
+*editprompt.txt*         For NVIM v0.10.0         Last change: 2026 January 15
+
+==============================================================================
+Table of Contents                               *editprompt-table-of-contents*
+
+1. Features                                              |editprompt-features|
+2. Installation                                      |editprompt-installation|
+3. Default Config                                  |editprompt-default-config|
+4. Usage                                                    |editprompt-usage|
+5. Command                                                |editprompt-command|
+  - capture                                       |editprompt-command-capture|
+  - input                                           |editprompt-command-input|
+  - stash                                           |editprompt-command-stash|
+6. API                                                        |editprompt-api|
+  - capture                                           |editprompt-api-capture|
+  - input                                               |editprompt-api-input|
+  - input_auto_send                           |editprompt-api-input_auto_send|
+  - setup                                               |editprompt-api-setup|
+  - stash_pop                                       |editprompt-api-stash_pop|
+  - stash_push                                     |editprompt-api-stash_push|
+
+==============================================================================
+1. Features                                              *editprompt-features*
+
+- Neovim frontend for the editprompt <https://github.com/eetann/editprompt> CLI tool
+- Send buffer content to clipboard or target pane
+- Capture output from editprompt CLI into buffer
+- Stash/restore buffer content with picker UI
+
+
+==============================================================================
+2. Installation                                      *editprompt-installation*
+
+>txt
+    eetann/editprompt.nvim
+<
+
+with lazy.nvim <https://github.com/folke/lazy.nvim>
+
+>lua
+    {
+      "eetann/editprompt.nvim",
+      dependencies = {
+        "folke/snacks.nvim", -- optional, for snacks.picker
+      },
+      opts = {}
+    }
+<
+
+**Example of lazy.nvim lazy loading**
+
+>lua
+    {
+      "eetann/editprompt.nvim",
+      -- ...
+      keys = {
+        { "<Space>ei", "<Cmd>Editprompt input<CR>" },
+        { "<Space>ec", "<Cmd>Editprompt capture<CR>" },
+      },
+      cmd = "Editprompt",
+    }
+<
+
+
+==============================================================================
+3. Default Config                                  *editprompt-default-config*
+
+>lua
+    {
+      cmd = "editprompt",
+      picker = "native"
+    }
+<
+
+
+==============================================================================
+4. Usage                                                    *editprompt-usage*
+
+
+==============================================================================
+5. Command                                                *editprompt-command*
+
+`:Editprompt {subcommand}`
+
+
+CAPTURE                                           *editprompt-command-capture*
+
+>
+    :Editprompt capture
+<
+
+Capture quoted content from editprompt CLI
+
+_No arguments_  
+
+
+INPUT                                               *editprompt-command-input*
+
+>
+    :Editprompt input
+<
+
+Send buffer content to clipboard (–auto-send for auto paste)
+
+  Name         Description
+  ------------ --------------------------
+  –auto-send   Auto send to target pane
+ 
+
+
+STASH                                               *editprompt-command-stash*
+
+>
+    :Editprompt stash
+<
+
+Stash operations (push/pop/drop)
+
+  -----------------------------------------------------------------------
+  Name                   Description
+  ---------------------- ------------------------------------------------
+  push|pop|drop          push: save buffer to stash, pop: restore from
+                         stash, drop: delete from stash
+
+  -----------------------------------------------------------------------
+ 
+
+
+==============================================================================
+6. API                                                        *editprompt-api*
+
+
+CAPTURE                                               *editprompt-api-capture*
+
+Capture quoted content from editprompt CLI. Executes `editprompt dump`.
+
+_No arguments_  
+
+
+INPUT                                                   *editprompt-api-input*
+
+Send buffer content to clipboard. Executes `editprompt input --always-copy`.
+
+_No arguments_  
+
+
+INPUT_AUTO_SEND                               *editprompt-api-input_auto_send*
+
+Send buffer content to target pane automatically. Executes `editprompt input
+--auto-send`.
+
+_No arguments_  
+
+
+SETUP                                                   *editprompt-api-setup*
+
+>lua
+    editprompt.setup({...})
+<
+
+Setup editprompt
+
+  Name     Type                  Description
+  -------- --------------------- ------------------
+  config   |editprompt.Config|   Setup editprompt
+ 
+
+
+STASH_POP                                           *editprompt-api-stash_pop*
+
+Pop stash content with picker. Executes `editprompt stash list` then
+`editprompt stash pop --key`.
+
+_No arguments_  
+
+
+STASH_PUSH                                         *editprompt-api-stash_push*
+
+Push buffer content to stash. Executes `editprompt stash push`.
+
+_No arguments_  
+
+Generated by panvimdoc <https://github.com/kdheepak/panvimdoc>
+
+vim:tw=78:ts=8:noet:ft=help:norl:

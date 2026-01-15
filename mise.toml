@@ -18,13 +18,14 @@ docker build --platform linux/arm64/v8 \
 
 [tasks.generate-doc]
 run = """
-pnpx tsx scripts/doc/generate.ts \
-&& docker run -v $PWD:/data -i panvimdoc \
+bun run scripts/doc/generate.ts \
+&& docker run --rm -v $PWD:/data -i panvimdoc \
   --project-name editprompt \
   --input-file README.md \
   --vim-version "NVIM v0.10.0" \
   --toc true \
   --demojify true \
   --treesitter true \
+  --shift-heading-level-by -1 \
   --ignore-rawblocks true
 """
