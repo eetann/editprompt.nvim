@@ -32,8 +32,11 @@ with [lazy.nvim](https://github.com/folke/lazy.nvim)
   "eetann/editprompt.nvim",
   -- ...
   keys = {
-    { "<Space>ei", "<Cmd>Editprompt input<CR>" },
+    { "<Space>ei", "<Cmd>Editprompt input --auto-send<CR>" },
+    { "<Space>eI", "<Cmd>Editprompt input<CR>" },
     { "<Space>ec", "<Cmd>Editprompt capture<CR>" },
+    { "<Space>es", "<Cmd>Editprompt stash pop<CR>" },
+    { "<Space>eS", "<Cmd>Editprompt stash push<CR>" },
   },
   cmd = "Editprompt",
 }
