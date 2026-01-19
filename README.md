@@ -6,7 +6,7 @@
 
 - Neovim frontend for the [editprompt](https://github.com/eetann/editprompt) CLI tool
 - Send buffer content to clipboard or target pane
-- Capture output from editprompt CLI into buffer
+- Dump output from editprompt CLI into buffer
 - Stash/restore buffer content with picker UI
 
 ## 📦 Installation
@@ -34,7 +34,7 @@ with [lazy.nvim](https://github.com/folke/lazy.nvim)
   keys = {
     { "<Space>ei", "<Cmd>Editprompt input --auto-send<CR>" },
     { "<Space>eI", "<Cmd>Editprompt input<CR>" },
-    { "<Space>ec", "<Cmd>Editprompt capture<CR>" },
+    { "<Space>ed", "<Cmd>Editprompt dump<CR>" },
     { "<Space>es", "<Cmd>Editprompt stash pop<CR>" },
     { "<Space>eS", "<Cmd>Editprompt stash push<CR>" },
   },
@@ -60,12 +60,12 @@ with [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 <!-- auto-generate-s:command -->
 
-### capture
+### dump
 ```
-:Editprompt capture
+:Editprompt dump
 ```
 
-Capture quoted content from editprompt CLI
+Dump quoted content from editprompt CLI
 
 _No arguments_
 &nbsp;
@@ -106,8 +106,8 @@ Stash operations (push/pop/drop)
 
 <!-- auto-generate-s:api -->
 
-### capture
-Capture quoted content from editprompt CLI.
+### dump
+Dump quoted content from editprompt CLI.
 Executes `editprompt dump`.
 
 _No arguments_

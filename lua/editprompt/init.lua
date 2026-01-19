@@ -26,14 +26,14 @@ end
 
 --[=[@doc
   category = "api"
-  name = "capture"
+  name = "dump"
   desc = """
-Capture quoted content from editprompt CLI.
+Dump quoted content from editprompt CLI.
 Executes `editprompt dump`.
 """
 --]=]
-editprompt.capture = function()
-  require("editprompt.modes.capture").execute()
+editprompt.dump = function()
+  require("editprompt.modes.dump").execute()
 end
 
 --[=[@doc

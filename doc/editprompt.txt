@@ -1,4 +1,4 @@
-*editprompt.txt*         For NVIM v0.10.0         Last change: 2026 January 16
+*editprompt.txt*         For NVIM v0.10.0         Last change: 2026 January 19
 
 ==============================================================================
 Table of Contents                               *editprompt-table-of-contents*
@@ -8,11 +8,11 @@ Table of Contents                               *editprompt-table-of-contents*
 3. Default Config                                  |editprompt-default-config|
 4. Usage                                                    |editprompt-usage|
 5. Command                                                |editprompt-command|
-  - capture                                       |editprompt-command-capture|
+  - dump                                             |editprompt-command-dump|
   - input                                           |editprompt-command-input|
   - stash                                           |editprompt-command-stash|
 6. API                                                        |editprompt-api|
-  - capture                                           |editprompt-api-capture|
+  - dump                                                 |editprompt-api-dump|
   - input                                               |editprompt-api-input|
   - input_auto_send                           |editprompt-api-input_auto_send|
   - setup                                               |editprompt-api-setup|
@@ -24,7 +24,7 @@ Table of Contents                               *editprompt-table-of-contents*
 
 - Neovim frontend for the editprompt <https://github.com/eetann/editprompt> CLI tool
 - Send buffer content to clipboard or target pane
-- Capture output from editprompt CLI into buffer
+- Dump output from editprompt CLI into buffer
 - Stash/restore buffer content with picker UI
 
 
@@ -56,7 +56,7 @@ with lazy.nvim <https://github.com/folke/lazy.nvim>
       keys = {
         { "<Space>ei", "<Cmd>Editprompt input --auto-send<CR>" },
         { "<Space>eI", "<Cmd>Editprompt input<CR>" },
-        { "<Space>ec", "<Cmd>Editprompt capture<CR>" },
+        { "<Space>ed", "<Cmd>Editprompt dump<CR>" },
         { "<Space>es", "<Cmd>Editprompt stash pop<CR>" },
         { "<Space>eS", "<Cmd>Editprompt stash push<CR>" },
       },
@@ -86,13 +86,13 @@ with lazy.nvim <https://github.com/folke/lazy.nvim>
 `:Editprompt {subcommand}`
 
 
-CAPTURE                                           *editprompt-command-capture*
+DUMP                                                 *editprompt-command-dump*
 
 >
-    :Editprompt capture
+    :Editprompt dump
 <
 
-Capture quoted content from editprompt CLI
+Dump quoted content from editprompt CLI
 
 _No arguments_  
 
@@ -133,9 +133,9 @@ Stash operations (push/pop/drop)
 6. API                                                        *editprompt-api*
 
 
-CAPTURE                                               *editprompt-api-capture*
+DUMP                                                     *editprompt-api-dump*
 
-Capture quoted content from editprompt CLI. Executes `editprompt dump`.
+Dump quoted content from editprompt CLI. Executes `editprompt dump`.
 
 _No arguments_  
 

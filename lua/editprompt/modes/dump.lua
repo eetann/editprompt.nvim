@@ -3,7 +3,7 @@ local utils = require("editprompt.utils")
 
 local M = {}
 
---- Execute capture (dump) command
+--- Execute dump (dump) command
 function M.execute()
   utils.save_buffer()
 

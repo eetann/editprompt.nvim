@@ -31,12 +31,12 @@ local subcmd_tbl = {
   },
   --[=[@doc
   category = "command"
-  name = "capture"
-  desc = "Capture quoted content from editprompt CLI"
+  name = "dump"
+  desc = "Dump quoted content from editprompt CLI"
   --]=]
-  capture = {
+  dump = {
     impl = function()
-      require("editprompt.modes.capture").execute()
+      require("editprompt.modes.dump").execute()
     end,
   },
   --[=[@doc
