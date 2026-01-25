@@ -9,6 +9,10 @@ local function execute_input(flag)
   utils.save_buffer()
   local content = utils.get_buffer_content()
 
+  if content == "" then
+    return
+  end
+
   local args = vim.deepcopy(config.get_cmd())
   vim.list_extend(args, { "input", flag, "--", content })
 
