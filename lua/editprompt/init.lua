@@ -50,6 +50,49 @@ end
 
 --[=[@doc
   category = "api"
+  name = "press"
+  desc = """
+Send a key to the target pane without Enter.
+Executes `editprompt press -- {key}`.
+Key notation is automatically converted from Neovim format to the multiplexer format.
+"""
+
+  [[args]]
+  name = "key"
+  type = "string"
+  desc = "Key to send in Neovim notation (e.g., '1', '<CR>', '<Tab>', '<C-c>')"
+--]=]
+editprompt.press = function(key)
+  require("editprompt.modes.press").execute(key)
+end
+
+--[=[@doc
+  category = "api"
+  name = "press_mode"
+  desc = """
+Enter press mode for continuous key sending.
+All key inputs are forwarded to the target pane.
+Press the exit key (default: `q`) to leave press mode.
+Double-press the exit key to send it instead.
+"""
+--]=]
+editprompt.press_mode = function()
+  require("editprompt.modes.press_mode").start()
+end
+
+--[=[@doc
+  category = "api"
+  name = "press_mode_stop"
+  desc = """
+Exit press mode.
+"""
+--]=]
+editprompt.press_mode_stop = function()
+  require("editprompt.modes.press_mode").stop()
+end
+
+--[=[@doc
+  category = "api"
   name = "dump"
   desc = """
 Dump quoted content from editprompt CLI.

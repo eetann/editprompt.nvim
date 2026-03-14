@@ -9,6 +9,7 @@
 - Navigate previously sent prompts from history
 - Dump output from editprompt CLI into buffer
 - Stash/restore buffer content with picker UI
+- Send key inputs to target pane (press mode for continuous input)
 
 ## 📦 Installation
 ```txt
@@ -41,6 +42,7 @@ with [lazy.nvim](https://github.com/folke/lazy.nvim)
     { "<Space>ed", "<Cmd>Editprompt dump<CR>" },
     { "<Space>es", "<Cmd>Editprompt stash pop<CR>" },
     { "<Space>eS", "<Cmd>Editprompt stash push<CR>" },
+    { "<Space>ek", "<Cmd>Editprompt press_mode<CR>" },
   },
   cmd = "Editprompt",
 }
@@ -52,7 +54,10 @@ with [lazy.nvim](https://github.com/folke/lazy.nvim)
 ```lua
 {
   cmd = "editprompt",
-  picker = "native"
+  picker = "native",
+  press_mode = {
+    exit_key = "q"
+  }
 }
 ```
 <!-- auto-generate-e:default_config -->
@@ -61,6 +66,46 @@ with [lazy.nvim](https://github.com/folke/lazy.nvim)
 
 `--visual` is intended for visual-mode mappings such as `xmap <Cmd>Editprompt input --visual<CR>`.
 It sends and removes all lines touched by the selection.
+
+### Press key binding examples
+
+**Pattern 1: Direct number key mapping**
+
+Map number keys directly for responding to AskUserQuestion selections:
+
+```lua
+keys = {
+  { "1", function() require("editprompt").press("1") end },
+  { "2", function() require("editprompt").press("2") end },
+  { "3", function() require("editprompt").press("3") end },
+  { "4", function() require("editprompt").press("4") end },
+  { "<CR>", function() require("editprompt").press("<CR>") end },
+}
+```
+
+**Pattern 2: Prefix key mapping**
+
+Use a prefix key to avoid conflicts with normal editing:
+
+```lua
+keys = {
+  { "<Space>k1", function() require("editprompt").press("1") end },
+  { "<Space>k2", function() require("editprompt").press("2") end },
+  { "<Space>k<CR>", function() require("editprompt").press("<CR>") end },
+  { "<Space>kk", function() require("editprompt").press_mode() end },
+}
+```
+
+**Pattern 3: Press mode**
+
+Enter press mode where all keys are forwarded to the target pane.
+Press `q` to exit (configurable via `press_mode.exit_key`). Double-press `q` to send `q` instead.
+
+```lua
+keys = {
+  { "<Space>kk", function() require("editprompt").press_mode() end },
+}
+```
 
 ## Command
 `:Editprompt {subcommand}`
@@ -106,6 +151,32 @@ Send buffer content or selected lines to clipboard (--auto-send for auto paste)
 | --auto-send | Auto send to target pane |
 | --visual | Send all lines touched by the current visual selection |
 
+&nbsp;
+
+
+### press
+```
+:Editprompt press
+```
+
+Send a key to target pane without Enter
+
+
+| Name | Description |
+|------|-------------|
+| key | Key to send (e.g., 1, Tab, Enter) |
+
+&nbsp;
+
+
+### press_mode
+```
+:Editprompt press_mode
+```
+
+Enter press mode for continuous key sending
+
+_No arguments_
 &nbsp;
 
 
@@ -178,6 +249,36 @@ _No arguments_
 ### input_visual_auto_send
 Send lines touched by the visual selection to target pane automatically.
 Executes `editprompt input --auto-send` with the selected lines.
+
+_No arguments_
+&nbsp;
+
+
+### press
+Send a key to the target pane without Enter.
+Executes `editprompt press -- {key}`.
+Key notation is automatically converted from Neovim format to the multiplexer format.
+
+
+| Name | Type | Description |
+|------|------|-------------|
+| key | string | Key to send in Neovim notation (e.g., '1', '<CR>', '<Tab>', '<C-c>') |
+
+&nbsp;
+
+
+### press_mode
+Enter press mode for continuous key sending.
+All key inputs are forwarded to the target pane.
+Press the exit key (default: `q`) to leave press mode.
+Double-press the exit key to send it instead.
+
+_No arguments_
+&nbsp;
+
+
+### press_mode_stop
+Exit press mode.
 
 _No arguments_
 &nbsp;

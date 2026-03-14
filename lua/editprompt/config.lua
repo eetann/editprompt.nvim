@@ -2,9 +2,14 @@
 ---@alias editprompt.PickerType "native" | "snacks"
 
 ---@doc.type
+---@class editprompt.PressModeConfig
+---@field exit_key string key to exit press mode (default: "q")
+
+---@doc.type
 ---@class editprompt.Config
 ---@field cmd string|string[] editprompt CLI command
 ---@field picker editprompt.PickerType picker to use (auto-detected on setup)
+---@field press_mode editprompt.PressModeConfig press mode settings
 
 local M = {}
 
@@ -12,6 +17,9 @@ local M = {}
 local default_config = {
   cmd = "editprompt",
   picker = "native",
+  press_mode = {
+    exit_key = "q",
+  },
 }
 
 ---@type editprompt.Config
@@ -36,6 +44,12 @@ end
 ---@return editprompt.PickerType
 function M.get_picker()
   return config.picker
+end
+
+--- Get press mode exit key
+---@return string
+function M.get_press_mode_exit_key()
+  return config.press_mode.exit_key
 end
 
 --- Reset configuration to default (for testing)

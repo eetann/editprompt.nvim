@@ -20,6 +20,20 @@ T["setup()"]["user settings are merged"] = function()
   MiniTest.expect.equality(config.get_picker(), "snacks")
 end
 
+T["setup()"]["press_mode defaults are set correctly"] = function()
+  config._reset()
+  config.setup()
+
+  MiniTest.expect.equality(config.get_press_mode_exit_key(), "q")
+end
+
+T["setup()"]["press_mode exit_key can be customized"] = function()
+  config._reset()
+  config.setup({ press_mode = { exit_key = "x" } })
+
+  MiniTest.expect.equality(config.get_press_mode_exit_key(), "x")
+end
+
 T["get_cmd()"] = MiniTest.new_set()
 
 T["get_cmd()"]["converts string to table"] = function()
