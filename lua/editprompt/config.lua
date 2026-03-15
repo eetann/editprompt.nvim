@@ -6,10 +6,21 @@
 ---@field exit_key string key to exit press mode (default: "q")
 
 ---@doc.type
+---@class editprompt.SendContext
+---@field bufnr integer
+---@field source "content" | "buffer" | "visual"
+---@field copy boolean
+---@field auto_send boolean
+
+---@doc.type
 ---@class editprompt.Config
 ---@field cmd string|string[] editprompt CLI command
 ---@field picker editprompt.PickerType picker to use (auto-detected on setup)
 ---@field press_mode editprompt.PressModeConfig press mode settings
+---@field before_input? fun(content: string, ctx: editprompt.SendContext): string
+---@field should_copy? fun(content: string, ctx: editprompt.SendContext): boolean
+---@field on_success? fun(content: string, bufnr: integer, ctx: editprompt.SendContext)
+---@field on_error? fun(content: string, bufnr: integer, result: vim.SystemCompleted, ctx: editprompt.SendContext)
 
 local M = {}
 
@@ -50,6 +61,12 @@ end
 ---@return string
 function M.get_press_mode_exit_key()
   return config.press_mode.exit_key
+end
+
+--- Get raw config
+---@return editprompt.Config
+function M.get()
+  return config
 end
 
 --- Reset configuration to default (for testing)

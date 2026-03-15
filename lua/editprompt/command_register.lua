@@ -22,7 +22,10 @@ function M.execute_command(subcmd_tbl, opts)
   local subcmd = subcmd_tbl[subcmd_key]
 
   if not subcmd then
-    vim.notify("Editprompt: Unknown command: " .. subcmd_key, vim.log.levels.ERROR)
+    vim.notify(
+      "Editprompt: Unknown command: " .. subcmd_key,
+      vim.log.levels.ERROR
+    )
     return
   end
   subcmd.impl(args, opts)

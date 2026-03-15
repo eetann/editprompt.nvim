@@ -57,6 +57,20 @@ local function format_stash_item(stash)
   return date_str .. " " .. content_str
 end
 
+---@param stashes {key: string, content: string}[]
+---@return string?
+local function get_latest_stash_key(stashes)
+  if #stashes == 0 then
+    return nil
+  end
+
+  table.sort(stashes, function(a, b)
+    return (a.key or "") > (b.key or "")
+  end)
+
+  return stashes[1] and stashes[1].key or nil
+end
+
 --- Fetch stash list from CLI
 ---@param callback fun(stashes: table[]|nil, err: string|nil)
 local function fetch_stash_list(callback)
@@ -87,9 +101,14 @@ local function fetch_stash_list(callback)
   end)
 end
 
+---@class editprompt.StashPopOpts
+---@field notify? boolean
+
 --- Execute stash pop with selected key
 ---@param key string
-local function execute_pop(key)
+---@param opts? editprompt.StashPopOpts
+local function execute_pop(key, opts)
+  opts = opts or {}
   local args = vim.deepcopy(config.get_cmd())
   vim.list_extend(args, { "stash", "pop", "--key", key })
 
@@ -99,7 +118,9 @@ local function execute_pop(key)
         local output = result.stdout or ""
         output = output:gsub("\n$", "")
         utils.insert_to_buffer(output)
-        vim.notify("Stash popped", vim.log.levels.INFO)
+        if opts.notify ~= false then
+          vim.notify("Stash popped", vim.log.levels.INFO)
+        end
       else
         local err_msg = result.stderr or "Unknown error"
         vim.notify("editprompt error: " .. err_msg, vim.log.levels.ERROR)
@@ -244,7 +265,8 @@ function M.pop()
     if err then
       local level = err == "No stash entries" and vim.log.levels.WARN
         or vim.log.levels.ERROR
-      local msg = err == "No stash entries" and err or ("editprompt error: " .. err)
+      local msg = err == "No stash entries" and err
+        or ("editprompt error: " .. err)
       vim.notify(msg, level)
       return
     end
@@ -255,13 +277,35 @@ function M.pop()
   end)
 end
 
+--- Pop the latest stash entry without showing picker
+function M.pop_latest()
+  fetch_stash_list(function(stashes, err)
+    if err == "No stash entries" then
+      return
+    end
+
+    if err then
+      vim.notify("editprompt error: " .. err, vim.log.levels.ERROR)
+      return
+    end
+
+    local key = get_latest_stash_key(stashes)
+    if not key then
+      return
+    end
+
+    execute_pop(key, { notify = false })
+  end)
+end
+
 --- Drop stash with picker
 function M.drop()
   fetch_stash_list(function(stashes, err)
     if err then
       local level = err == "No stash entries" and vim.log.levels.WARN
         or vim.log.levels.ERROR
-      local msg = err == "No stash entries" and err or ("editprompt error: " .. err)
+      local msg = err == "No stash entries" and err
+        or ("editprompt error: " .. err)
       vim.notify(msg, level)
       return
     end
