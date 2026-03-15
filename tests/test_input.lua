@@ -1,9 +1,8 @@
 local T = MiniTest.new_set()
 
+local editprompt = require("editprompt")
 local config = require("editprompt.config")
 local history = require("editprompt.history")
-local input = require("editprompt.modes.input")
-
 local function create_buffer(lines)
   local bufnr = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines or {})
@@ -11,16 +10,22 @@ local function create_buffer(lines)
   return bufnr
 end
 
-local function with_stubbed_system(fn)
+local function with_stubbed_system(results, fn)
   local original_system = vim.system
   local calls = {}
+  local index = 0
 
   vim.system = function(args, opts, callback)
+    index = index + 1
     table.insert(calls, {
       args = vim.deepcopy(args),
       opts = vim.deepcopy(opts),
     })
-    callback({ code = 0, stdout = "", stderr = "" })
+
+    local result = results[index]
+      or results.default
+      or { code = 0, stdout = "", stderr = "" }
+    callback(vim.deepcopy(result))
   end
 
   local ok, err = pcall(fn, calls)
@@ -30,16 +35,70 @@ local function with_stubbed_system(fn)
   end
 end
 
-T["execute()"] = MiniTest.new_set()
+T["input_content()"] = MiniTest.new_set({
+  hooks = {
+    pre_case = function()
+      config._reset()
+      history._reset()
+    end,
+  },
+})
 
-T["execute()"]["stores successful sends in history"] = function()
-  config._reset()
-  history._reset()
+T["input_content()"]["uses --always-copy by default"] = function()
+  with_stubbed_system({}, function(calls)
+    editprompt.input_content("sent text")
 
-  with_stubbed_system(function(calls)
+    vim.wait(100, function()
+      return #calls == 1
+    end)
+
+    MiniTest.expect.equality(calls[1].args, {
+      "editprompt",
+      "input",
+      "--always-copy",
+      "--",
+      "sent text",
+    })
+  end)
+end
+
+T["input_content_auto_send()"] = MiniTest.new_set({
+  hooks = {
+    pre_case = function()
+      config._reset()
+      history._reset()
+    end,
+  },
+})
+
+T["input_content_auto_send()"]["uses --auto-send"] = function()
+  with_stubbed_system({}, function(calls)
+    editprompt.input_content_auto_send("sent text")
+
+    MiniTest.expect.equality(calls[1].args, {
+      "editprompt",
+      "input",
+      "--auto-send",
+      "--",
+      "sent text",
+    })
+  end)
+end
+
+T["input()"] = MiniTest.new_set({
+  hooks = {
+    pre_case = function()
+      config._reset()
+      history._reset()
+    end,
+  },
+})
+
+T["input()"]["stores successful sends in history"] = function()
+  with_stubbed_system({}, function(calls)
     local bufnr = create_buffer({ "sent text" })
 
-    input.execute()
+    editprompt.input()
 
     vim.wait(100, function()
       return #calls == 1
@@ -70,23 +129,47 @@ T["execute()"]["stores successful sends in history"] = function()
   end)
 end
 
-T["execute_visual()"] = MiniTest.new_set()
+T["input_visual()"] = MiniTest.new_set({
+  hooks = {
+    pre_case = function()
+      config._reset()
+      history._reset()
+    end,
+  },
+})
 
-T["execute_visual()"]["sends touched lines and removes them on success"] = function()
-  config._reset()
-  history._reset()
+T["input_visual()"]["sends touched lines and removes them on success"] = function()
+  with_stubbed_system({}, function(calls)
+    local bufnr = create_buffer({ "alpha", "beta", "gamma" })
 
-  with_stubbed_system(function(calls)
-    local bufnr = create_buffer({ "alpha beta" })
+    local original_mode = vim.fn.mode
+    local original_getpos = vim.fn.getpos
 
-    input.execute_visual({
-      start_pos = { 0, 1, 7, 0 },
-      end_pos = { 0, 1, 10, 0 },
-    })
+    vim.fn.mode = function()
+      return "v"
+    end
+
+    vim.fn.getpos = function(mark)
+      if mark == "v" then
+        return { bufnr, 1, 1, 0 }
+      end
+      if mark == "." then
+        return { bufnr, 2, 4, 0 }
+      end
+      return original_getpos(mark)
+    end
+
+    editprompt.input_visual()
+
+    vim.fn.mode = original_mode
+    vim.fn.getpos = original_getpos
 
     vim.wait(100, function()
       return #calls == 1
-        and vim.deep_equal(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), {})
+        and vim.deep_equal(
+          vim.api.nvim_buf_get_lines(bufnr, 0, -1, false),
+          { "gamma" }
+        )
     end)
 
     MiniTest.expect.equality(calls[1].args, {
@@ -94,11 +177,11 @@ T["execute_visual()"]["sends touched lines and removes them on success"] = funct
       "input",
       "--always-copy",
       "--",
-      "alpha beta",
+      "alpha\nbeta",
     })
     MiniTest.expect.equality(
       vim.api.nvim_buf_get_lines(bufnr, 0, -1, false),
-      {}
+      { "gamma" }
     )
   end)
 end

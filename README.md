@@ -62,6 +62,54 @@ with [lazy.nvim](https://github.com/folke/lazy.nvim)
 `--visual` is intended for visual-mode mappings such as `xmap <Cmd>Editprompt input --visual<CR>`.
 It sends and removes all lines touched by the selection.
 
+### Input Hooks
+
+`require("editprompt").input_content(content)` sends provided content without reading the current buffer.
+
+Source-specific behavior:
+
+- `input()` sends the current buffer and clears it on success
+- `input_auto_send()` sends the current buffer with `--auto-send` and clears it on success
+- `input_visual()` sends all lines touched by the current visual selection and deletes them on success
+- `input_visual_auto_send()` sends the current visual selection with `--auto-send` and deletes it on success
+- `input_content(content)` sends the provided content with `--always-copy`
+- `input_content_auto_send(content)` sends the provided content with `--auto-send`
+
+You can customize input behavior globally via `setup()`:
+
+```lua
+require("editprompt").setup({
+  before_input = function(content, ctx)
+    local normalized = content:gsub("\t", "  ")
+    if not normalized:find("\n$") then
+      normalized = normalized .. "\n"
+    end
+    return normalized
+  end,
+  should_copy = function(content, ctx)
+    return not vim.startswith(content, "/")
+  end,
+  on_success = function(content, bufnr, ctx)
+    if ctx.auto_send then
+      require("editprompt").stash_pop_latest()
+    end
+  end,
+  on_error = function(content, bufnr, result, ctx)
+    vim.notify("editprompt error: " .. (result.stderr or "Unknown error"), vim.log.levels.ERROR)
+  end,
+})
+```
+
+### Execution Order
+
+1. `before_input`
+2. CLI execution
+3. built-in cleanup for the called `input*`
+4. history push when enabled
+5. `on_success`
+
+If `on_error` is configured, the plugin does not emit its default error notification.
+
 ## Command
 `:Editprompt {subcommand}`
 
@@ -167,6 +215,30 @@ _No arguments_
 &nbsp;
 
 
+### input_content
+Send provided content to clipboard.
+Executes `editprompt input --always-copy` with the given content.
+
+
+| Name | Type | Description |
+|------|------|-------------|
+| content | string | Content to send |
+
+&nbsp;
+
+
+### input_content_auto_send
+Send provided content to target pane automatically.
+Executes `editprompt input --auto-send` with the given content.
+
+
+| Name | Type | Description |
+|------|------|-------------|
+| content | string | Content to send |
+
+&nbsp;
+
+
 ### input_visual
 Send lines touched by the visual selection to clipboard.
 Executes `editprompt input --always-copy` with the selected lines.
@@ -200,6 +272,14 @@ Setup editprompt
 ### stash_pop
 Pop stash content with picker.
 Executes `editprompt stash list` then `editprompt stash pop --key`.
+
+_No arguments_
+&nbsp;
+
+
+### stash_pop_latest
+Pop the latest stash content without showing picker.
+Executes `editprompt stash list` then `editprompt stash pop --key` for the newest entry.
 
 _No arguments_
 &nbsp;

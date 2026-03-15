@@ -1,4 +1,4 @@
-*editprompt.txt*         For NVIM v0.10.0         Last change: 2026 March 08
+*editprompt.txt*          For NVIM v0.10.0          Last change: 2026 March 14
 
 ==============================================================================
 Table of Contents                               *editprompt-table-of-contents*
@@ -7,6 +7,8 @@ Table of Contents                               *editprompt-table-of-contents*
 2. Installation                                      |editprompt-installation|
 3. Default Config                                  |editprompt-default-config|
 4. Usage                                                    |editprompt-usage|
+  - Input Hooks                                 |editprompt-usage-input-hooks|
+  - ExecutionOrder                           |editprompt-usage-executionorder|
 5. Command                                                |editprompt-command|
   - dump                                             |editprompt-command-dump|
   - history                                       |editprompt-command-history|
@@ -18,10 +20,13 @@ Table of Contents                               *editprompt-table-of-contents*
   - history_prev                                 |editprompt-api-history_prev|
   - input                                               |editprompt-api-input|
   - input_auto_send                           |editprompt-api-input_auto_send|
+  - input_content                               |editprompt-api-input_content|
+  - input_content_auto_send           |editprompt-api-input_content_auto_send|
   - input_visual                                 |editprompt-api-input_visual|
   - input_visual_auto_send             |editprompt-api-input_visual_auto_send|
   - setup                                               |editprompt-api-setup|
   - stash_pop                                       |editprompt-api-stash_pop|
+  - stash_pop_latest                         |editprompt-api-stash_pop_latest|
   - stash_push                                     |editprompt-api-stash_push|
 
 ==============================================================================
@@ -92,6 +97,58 @@ with lazy.nvim <https://github.com/folke/lazy.nvim>
 input --visual<CR>`. It sends and removes all lines touched by the selection.
 
 
+INPUT HOOKS                                     *editprompt-usage-input-hooks*
+
+`require("editprompt").input_content(content)` sends provided content without
+reading the current buffer.
+
+Source-specific behavior:
+
+- `input()` sends the current buffer and clears it on success
+- `input_auto_send()` sends the current buffer with `--auto-send` and clears it on success
+- `input_visual()` sends all lines touched by the current visual selection and deletes them on success
+- `input_visual_auto_send()` sends the current visual selection with `--auto-send` and deletes it on success
+- `input_content(content)` sends the provided content with `--always-copy`
+- `input_content_auto_send(content)` sends the provided content with `--auto-send`
+
+You can customize input behavior globally via `setup()`
+
+>lua
+    require("editprompt").setup({
+      before_input = function(content, ctx)
+        local normalized = content:gsub("\t", "  ")
+        if not normalized:find("\n$") then
+          normalized = normalized .. "\n"
+        end
+        return normalized
+      end,
+      should_copy = function(content, ctx)
+        return not vim.startswith(content, "/")
+      end,
+      on_success = function(content, bufnr, ctx)
+        if ctx.auto_send then
+          require("editprompt").stash_pop_latest()
+        end
+      end,
+      on_error = function(content, bufnr, result, ctx)
+        vim.notify("editprompt error: " .. (result.stderr or "Unknown error"), vim.log.levels.ERROR)
+      end,
+    })
+<
+
+
+EXECUTIONORDER                               *editprompt-usage-executionorder*
+
+1. `before_input`
+2. CLI execution
+3. built-in cleanup for the called `input*`
+4. history push when enabled
+5. `on_success`
+
+If `on_error` is configured, the plugin does not emit its default error
+notification.
+
+
 ==============================================================================
 5. Command                                                *editprompt-command*
 
@@ -129,7 +186,8 @@ INPUT                                               *editprompt-command-input*
     :Editprompt input
 <
 
-Send buffer content or selected lines to clipboard (–auto-send for auto paste)
+Send buffer content or selected lines to clipboard (–auto-send for auto
+paste)
 
   Name         Description
   ------------ --------------------------------------------------------
@@ -196,6 +254,28 @@ Send buffer content to target pane automatically. Executes `editprompt input
 _No arguments_  
 
 
+INPUT_CONTENT                                   *editprompt-api-input_content*
+
+Send provided content to clipboard. Executes `editprompt input --always-copy`
+with the given content.
+
+  Name      Type     Description
+  --------- -------- -----------------
+  content   string   Content to send
+ 
+
+
+INPUT_CONTENT_AUTO_SEND               *editprompt-api-input_content_auto_send*
+
+Send provided content to target pane automatically. Executes `editprompt input
+--auto-send` with the given content.
+
+  Name      Type     Description
+  --------- -------- -----------------
+  content   string   Content to send
+ 
+
+
 INPUT_VISUAL                                     *editprompt-api-input_visual*
 
 Send lines touched by the visual selection to clipboard. Executes `editprompt
@@ -204,7 +284,7 @@ input --always-copy` with the selected lines.
 _No arguments_  
 
 
-INPUT_VISUAL_AUTO_SEND             *editprompt-api-input_visual_auto_send*
+INPUT_VISUAL_AUTO_SEND                 *editprompt-api-input_visual_auto_send*
 
 Send lines touched by the visual selection to target pane automatically.
 Executes `editprompt input --auto-send` with the selected lines.
@@ -230,6 +310,14 @@ STASH_POP                                           *editprompt-api-stash_pop*
 
 Pop stash content with picker. Executes `editprompt stash list` then
 `editprompt stash pop --key`.
+
+_No arguments_  
+
+
+STASH_POP_LATEST                             *editprompt-api-stash_pop_latest*
+
+Pop the latest stash content without showing picker. Executes `editprompt stash
+list` then `editprompt stash pop --key` for the newest entry.
 
 _No arguments_  
 

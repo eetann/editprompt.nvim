@@ -2,6 +2,23 @@ local editprompt = {}
 
 --[=[@doc
   category = "api"
+  name = "input_content"
+  desc = """
+Send provided content to clipboard.
+Executes `editprompt input --always-copy` with the given content.
+"""
+
+  [[args]]
+  name = "content"
+  type = "string"
+  desc = "Content to send"
+--]=]
+editprompt.input_content = function(content)
+  require("editprompt.modes.input").execute_content(content)
+end
+
+--[=[@doc
+  category = "api"
   name = "input"
   desc = """
 Send buffer content to clipboard.
@@ -10,6 +27,23 @@ Executes `editprompt input --always-copy`.
 --]=]
 editprompt.input = function()
   require("editprompt.modes.input").execute()
+end
+
+--[=[@doc
+  category = "api"
+  name = "input_content_auto_send"
+  desc = """
+Send provided content to target pane automatically.
+Executes `editprompt input --auto-send` with the given content.
+"""
+
+  [[args]]
+  name = "content"
+  type = "string"
+  desc = "Content to send"
+--]=]
+editprompt.input_content_auto_send = function(content)
+  require("editprompt.modes.input").execute_content_auto_send(content)
 end
 
 --[=[@doc
@@ -82,6 +116,18 @@ Executes `editprompt stash list` then `editprompt stash pop --key`.
 --]=]
 editprompt.stash_pop = function()
   require("editprompt.modes.stash").pop()
+end
+
+--[=[@doc
+  category = "api"
+  name = "stash_pop_latest"
+  desc = """
+Pop the latest stash content without showing picker.
+Executes `editprompt stash list` then `editprompt stash pop --key` for the newest entry.
+"""
+--]=]
+editprompt.stash_pop_latest = function()
+  require("editprompt.modes.stash").pop_latest()
 end
 
 --[=[@doc

@@ -2,9 +2,20 @@
 ---@alias editprompt.PickerType "native" | "snacks"
 
 ---@doc.type
+---@class editprompt.SendContext
+---@field bufnr integer
+---@field source "content" | "buffer" | "visual"
+---@field copy boolean
+---@field auto_send boolean
+
+---@doc.type
 ---@class editprompt.Config
 ---@field cmd string|string[] editprompt CLI command
 ---@field picker editprompt.PickerType picker to use (auto-detected on setup)
+---@field before_input? fun(content: string, ctx: editprompt.SendContext): string
+---@field should_copy? fun(content: string, ctx: editprompt.SendContext): boolean
+---@field on_success? fun(content: string, bufnr: integer, ctx: editprompt.SendContext)
+---@field on_error? fun(content: string, bufnr: integer, result: vim.SystemCompleted, ctx: editprompt.SendContext)
 
 local M = {}
 
@@ -36,6 +47,12 @@ end
 ---@return editprompt.PickerType
 function M.get_picker()
   return config.picker
+end
+
+--- Get raw config
+---@return editprompt.Config
+function M.get()
+  return config
 end
 
 --- Reset configuration to default (for testing)
