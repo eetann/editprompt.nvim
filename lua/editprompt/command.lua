@@ -90,6 +90,34 @@ local subcmd_tbl = {
   },
   --[=[@doc
   category = "command"
+  name = "press"
+  desc = "Send a key to target pane without Enter"
+
+  [[args]]
+  name = "key"
+  desc = "Key to send (e.g., 1, Tab, Enter)"
+  --]=]
+  press = {
+    impl = function(args)
+      if not args[1] then
+        vim.notify("Editprompt: Key is required for press command", vim.log.levels.ERROR)
+        return
+      end
+      require("editprompt.modes.press").execute(args[1])
+    end,
+  },
+  --[=[@doc
+  category = "command"
+  name = "press_mode"
+  desc = "Enter press mode for continuous key sending"
+  --]=]
+  press_mode = {
+    impl = function()
+      require("editprompt.modes.press_mode").start()
+    end,
+  },
+  --[=[@doc
+  category = "command"
   name = "stash"
   desc = "Stash operations (push/pop/drop)"
 

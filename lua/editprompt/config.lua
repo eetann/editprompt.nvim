@@ -2,6 +2,10 @@
 ---@alias editprompt.PickerType "native" | "snacks"
 
 ---@doc.type
+---@class editprompt.PressModeConfig
+---@field exit_key string key to exit press mode (default: "q")
+
+---@doc.type
 ---@class editprompt.SendContext
 ---@field bufnr integer
 ---@field source "content" | "buffer" | "visual"
@@ -12,6 +16,7 @@
 ---@class editprompt.Config
 ---@field cmd string|string[] editprompt CLI command
 ---@field picker editprompt.PickerType picker to use (auto-detected on setup)
+---@field press_mode editprompt.PressModeConfig press mode settings
 ---@field before_input? fun(content: string, ctx: editprompt.SendContext): string
 ---@field should_copy? fun(content: string, ctx: editprompt.SendContext): boolean
 ---@field on_success? fun(content: string, bufnr: integer, ctx: editprompt.SendContext)
@@ -23,6 +28,9 @@ local M = {}
 local default_config = {
   cmd = "editprompt",
   picker = "native",
+  press_mode = {
+    exit_key = "q",
+  },
 }
 
 ---@type editprompt.Config
@@ -47,6 +55,12 @@ end
 ---@return editprompt.PickerType
 function M.get_picker()
   return config.picker
+end
+
+--- Get press mode exit key
+---@return string
+function M.get_press_mode_exit_key()
+  return config.press_mode.exit_key
 end
 
 --- Get raw config
