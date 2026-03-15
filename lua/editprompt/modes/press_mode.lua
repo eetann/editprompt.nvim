@@ -27,7 +27,7 @@ local function get_mappable_keys()
 
   -- Special keys
   local special = {
-    "<CR>", "<Tab>", "<BS>", "<Space>",
+    "<CR>", "<Tab>", "<S-Tab>", "<BS>", "<Space>",
     "<Up>", "<Down>", "<Left>", "<Right>",
     "<Esc>", "<C-c>", "<C-a>", "<C-b>", "<C-d>", "<C-e>",
     "<C-f>", "<C-g>", "<C-h>", "<C-j>", "<C-k>", "<C-l>",

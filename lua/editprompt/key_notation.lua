@@ -11,6 +11,7 @@ end
 local tmux_keys = {
   ["<CR>"] = "C-m",
   ["<Tab>"] = "Tab",
+  ["<S-Tab>"] = "BTab",
   ["<Esc>"] = "Escape",
   ["<BS>"] = "BSpace",
   ["<Space>"] = "Space",
@@ -25,6 +26,7 @@ local tmux_keys = {
 local wezterm_keys = {
   ["<CR>"] = "\r",
   ["<Tab>"] = "\t",
+  ["<S-Tab>"] = "\x1b[Z",
   ["<Esc>"] = "\x1b",
   ["<BS>"] = "\x7f",
   ["<Space>"] = " ",
