@@ -99,4 +99,42 @@ T["wezterm"]["<C-c> converts to control character"] = function()
   end)
 end
 
+T["herdr"] = MiniTest.new_set()
+
+T["herdr"]["plain characters pass through unchanged"] = function()
+  with_mux("herdr", function()
+    MiniTest.expect.equality(key_notation.convert("1"), "1")
+    MiniTest.expect.equality(key_notation.convert("a"), "a")
+    MiniTest.expect.equality(key_notation.convert("Z"), "Z")
+  end)
+end
+
+T["herdr"]["special keys convert correctly"] = function()
+  with_mux("herdr", function()
+    local cases = {
+      { "<CR>", "enter" },
+      { "<Tab>", "tab" },
+      { "<S-Tab>", "shift+tab" },
+      { "<Esc>", "esc" },
+      { "<BS>", "backspace" },
+      { "<Space>", "space" },
+      { "<Up>", "up" },
+      { "<Down>", "down" },
+      { "<Left>", "left" },
+      { "<Right>", "right" },
+    }
+
+    for _, case in ipairs(cases) do
+      MiniTest.expect.equality(key_notation.convert(case[1]), case[2])
+    end
+  end)
+end
+
+T["herdr"]["<C-c> converts to ctrl+c"] = function()
+  with_mux("herdr", function()
+    MiniTest.expect.equality(key_notation.convert("<C-c>"), "ctrl+c")
+    MiniTest.expect.equality(key_notation.convert("<C-a>"), "ctrl+a")
+  end)
+end
+
 return T
