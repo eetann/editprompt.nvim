@@ -1,6 +1,7 @@
 local T = MiniTest.new_set()
 
 local config = require("editprompt.config")
+local editprompt = require("editprompt")
 local press = require("editprompt.modes.press")
 
 local function with_mux(mux, fn)
@@ -83,6 +84,42 @@ T["execute()"]["wezterm: converts <CR> to \\r"] = function()
         "press",
         "--",
         "\r",
+      })
+    end)
+  end)
+end
+
+T["execute()"]["herdr: press(<CR>) sends enter"] = function()
+  config._reset()
+
+  with_mux("herdr", function()
+    with_stubbed_system(function(calls)
+      editprompt.press("<CR>")
+
+      MiniTest.expect.equality(#calls, 1)
+      MiniTest.expect.equality(calls[1].args, {
+        "editprompt",
+        "press",
+        "--",
+        "enter",
+      })
+    end)
+  end)
+end
+
+T["execute()"]["herdr: press(<S-Tab>) sends shift+tab"] = function()
+  config._reset()
+
+  with_mux("herdr", function()
+    with_stubbed_system(function(calls)
+      editprompt.press("<S-Tab>")
+
+      MiniTest.expect.equality(#calls, 1)
+      MiniTest.expect.equality(calls[1].args, {
+        "editprompt",
+        "press",
+        "--",
+        "shift+tab",
       })
     end)
   end)
