@@ -71,6 +71,16 @@ function M.next()
   return navigate(1)
 end
 
+--- List all sent entries, newest first
+---@return string[]
+function M.list()
+  local result = {}
+  for i = #entries, 1, -1 do
+    table.insert(result, entries[i])
+  end
+  return result
+end
+
 function M._reset()
   entries = {}
   reset_session()

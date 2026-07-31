@@ -44,4 +44,23 @@ T["navigate()"]["restores previous sent texts and latest draft"] = function()
   )
 end
 
+T["list()"] = MiniTest.new_set()
+
+T["list()"]["returns entries newest first"] = function()
+  history._reset()
+  create_buffer({})
+
+  history.push("first")
+  history.push("second")
+  history.push("third")
+
+  MiniTest.expect.equality(history.list(), { "third", "second", "first" })
+end
+
+T["list()"]["returns empty table when no entries exist"] = function()
+  history._reset()
+
+  MiniTest.expect.equality(history.list(), {})
+end
+
 return T

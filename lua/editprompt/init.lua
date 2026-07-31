@@ -197,6 +197,19 @@ end
 
 --[=[@doc
   category = "api"
+  name = "history_list"
+  desc = """
+Show a picker of prompts sent this session and insert the selected one.
+Inserts into an empty buffer, or appends after a blank line if the buffer already has content.
+No CLI subprocess is executed; history is kept in memory for the session.
+"""
+--]=]
+editprompt.history_list = function()
+  require("editprompt.modes.history_list").list()
+end
+
+--[=[@doc
+  category = "api"
   name = "setup"
   desc = """
 ```lua

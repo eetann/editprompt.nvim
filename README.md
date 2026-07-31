@@ -7,6 +7,7 @@
 - Neovim frontend for the [editprompt](https://github.com/eetann/editprompt) CLI tool
 - Send buffer content or selected lines to clipboard or target pane
 - Navigate previously sent prompts from history
+- List and insert prompts from history via picker UI
 - Dump output from editprompt CLI into buffer
 - Stash/restore buffer content with picker UI
 - Send key inputs to target pane (press mode for continuous input)
@@ -39,6 +40,7 @@ with [lazy.nvim](https://github.com/folke/lazy.nvim)
     { "<Space>ei", "<Cmd>Editprompt input --visual --auto-send<CR>", mode = "x" },
     { "<Space>ep", "<Cmd>Editprompt history prev<CR>" },
     { "<Space>en", "<Cmd>Editprompt history next<CR>" },
+    { "<Space>eh", "<Cmd>Editprompt history list<CR>" },
     { "<Space>ed", "<Cmd>Editprompt dump<CR>" },
     { "<Space>es", "<Cmd>Editprompt stash pop<CR>" },
     { "<Space>eS", "<Cmd>Editprompt stash push<CR>" },
@@ -181,7 +183,7 @@ History navigation for previously sent prompts
 
 | Name | Description |
 |------|-------------|
-| prev\|next | prev: older prompt, next: newer prompt or current draft |
+| prev\|next\|list | prev: older prompt, next: newer prompt or current draft, list: pick a prompt from history and insert it |
 
 &nbsp;
 
@@ -251,6 +253,15 @@ Stash operations (push/pop/drop)
 ### dump
 Dump quoted content from editprompt CLI.
 Executes `editprompt dump`.
+
+_No arguments_
+&nbsp;
+
+
+### history_list
+Show a picker of prompts sent this session and insert the selected one.
+Inserts into an empty buffer, or appends after a blank line if the buffer already has content.
+No CLI subprocess is executed; history is kept in memory for the session.
 
 _No arguments_
 &nbsp;

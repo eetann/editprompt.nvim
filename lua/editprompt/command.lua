@@ -57,8 +57,8 @@ local subcmd_tbl = {
   desc = "History navigation for previously sent prompts"
 
   [[args]]
-  name = "prev|next"
-  desc = "prev: older prompt, next: newer prompt or current draft"
+  name = "prev|next|list"
+  desc = "prev: older prompt, next: newer prompt or current draft, list: pick a prompt from history and insert it"
   --]=]
   history = {
     impl = function(args)
@@ -67,6 +67,8 @@ local subcmd_tbl = {
         require("editprompt.history").prev()
       elseif subcmd == "next" then
         require("editprompt.history").next()
+      elseif subcmd == "list" then
+        require("editprompt.modes.history_list").list()
       else
         vim.notify(
           "Editprompt: Unknown history command: " .. (subcmd or ""),
@@ -75,7 +77,10 @@ local subcmd_tbl = {
       end
     end,
     complete = function(subcmd_arg_lead)
-      return CommandRegister.get_complete(subcmd_arg_lead, { "prev", "next" })
+      return CommandRegister.get_complete(
+        subcmd_arg_lead,
+        { "prev", "next", "list" }
+      )
     end,
   },
   --[=[@doc
