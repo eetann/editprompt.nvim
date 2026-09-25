@@ -95,9 +95,40 @@ Key notation is automatically converted from Neovim format to the multiplexer fo
   name = "key"
   type = "string"
   desc = "Key to send in Neovim notation (e.g., '1', '<CR>', '<Tab>', '<C-c>')"
+
+  [[args]]
+  name = "opts"
+  type = "table|nil"
+  desc = "`delay`: ms to wait before delivering the key. `on_done`: called once it arrived"
 --]=]
-editprompt.press = function(key)
-  require("editprompt.modes.press").execute(key)
+editprompt.press = function(key, opts)
+  require("editprompt.modes.press").execute(key, opts)
+end
+
+--[=[@doc
+  category = "api"
+  name = "press_sequence"
+  desc = """
+Send keys in order, starting each key only after the previous one arrived.
+Use this instead of calling `press` several times in a row: independent `press`
+calls each spawn their own process chain, so a key launched later can overtake an
+earlier one and reach the pane first.
+`delay` also keeps a gap between the keys, which TUIs such as codex need to read
+a trailing `<CR>` as a submit instead of a pasted newline.
+"""
+
+  [[args]]
+  name = "keys"
+  type = "string[]"
+  desc = "Keys to send in Neovim notation (e.g., { 'ok', '<CR>' })"
+
+  [[args]]
+  name = "opts"
+  type = "table|nil"
+  desc = "`delay`: milliseconds to separate each key from the previous one"
+--]=]
+editprompt.press_sequence = function(keys, opts)
+  require("editprompt.modes.press").execute_sequence(keys, opts)
 end
 
 --[=[@doc

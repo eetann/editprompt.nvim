@@ -98,7 +98,20 @@ keys = {
 }
 ```
 
-**Pattern 3: Press mode**
+**Pattern 3: Text followed by Enter**
+
+Send a short reply and submit it with one key. Use `press_sequence` rather than two
+`press` calls: each `press` spawns its own process chain, so the `<CR>` can overtake
+the text and reach the pane first. `delay` keeps them apart in time as well, which
+TUIs such as codex need to read the `<CR>` as a submit instead of a pasted newline.
+
+```lua
+keys = {
+  { "<C-o>", function() require("editprompt").press_sequence({ "ok", "<CR>" }, { delay = 100 }) end },
+}
+```
+
+**Pattern 4: Press mode**
 
 Enter press mode where all keys are forwarded to the target pane.
 Press `q` to exit (configurable via `press_mode.exit_key`). Double-press `q` to send `q` instead.
@@ -346,6 +359,7 @@ Key notation is automatically converted from Neovim format to the multiplexer fo
 | Name | Type | Description |
 |------|------|-------------|
 | key | string | Key to send in Neovim notation (e.g., '1', '<CR>', '<Tab>', '<C-c>') |
+| opts | table\|nil | `delay`: ms to wait before delivering the key. `on_done`: called once it arrived |
 
 &nbsp;
 
@@ -364,6 +378,23 @@ _No arguments_
 Exit press mode.
 
 _No arguments_
+&nbsp;
+
+
+### press_sequence
+Send keys in order, starting each key only after the previous one arrived.
+Use this instead of calling `press` several times in a row: independent `press`
+calls each spawn their own process chain, so a key launched later can overtake an
+earlier one and reach the pane first.
+`delay` also keeps a gap between the keys, which TUIs such as codex need to read
+a trailing `<CR>` as a submit instead of a pasted newline.
+
+
+| Name | Type | Description |
+|------|------|-------------|
+| keys | string[] | Keys to send in Neovim notation (e.g., { 'ok', '<CR>' }) |
+| opts | table\|nil | `delay`: milliseconds to separate each key from the previous one |
+
 &nbsp;
 
 
