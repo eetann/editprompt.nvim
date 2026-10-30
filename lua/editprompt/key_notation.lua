@@ -1,7 +1,7 @@
 local M = {}
 
 --- Get multiplexer type from environment variable
----@return "tmux"|"wezterm"|"herdr"
+---@return "tmux"|"wezterm"|"herdr"|"rex"
 function M.get_mux()
   return vim.env.EDITPROMPT_MUX or "tmux"
 end
@@ -51,6 +51,22 @@ local herdr_keys = {
   ["<Right>"] = "right",
 }
 
+--- Rex special key mapping (Neovim notation -> Rex notation)
+--- Rex names its keys like Herdr, except that Escape is spelled in full.
+---@type table<string, string>
+local rex_keys = {
+  ["<CR>"] = "enter",
+  ["<Tab>"] = "tab",
+  ["<S-Tab>"] = "shift+tab",
+  ["<Esc>"] = "escape",
+  ["<BS>"] = "backspace",
+  ["<Space>"] = "space",
+  ["<Up>"] = "up",
+  ["<Down>"] = "down",
+  ["<Left>"] = "left",
+  ["<Right>"] = "right",
+}
+
 --- Convert Neovim <C-x> notation to tmux C-x notation
 ---@param nvim_key string
 ---@return string|nil
@@ -85,6 +101,17 @@ local function convert_ctrl_herdr(nvim_key)
   return nil
 end
 
+--- Convert Neovim <C-x> notation to Rex ctrl+x notation
+---@param nvim_key string
+---@return string|nil
+local function convert_ctrl_rex(nvim_key)
+  local char = nvim_key:match("^<C%-(%a)>$")
+  if char then
+    return "ctrl+" .. char:lower()
+  end
+  return nil
+end
+
 --- Convert Neovim key notation to CLI argument string
 ---@param nvim_key string Neovim key notation (e.g., "<CR>", "<Tab>", "1")
 ---@return string CLI argument string
@@ -106,6 +133,15 @@ function M.convert(nvim_key)
       return herdr_key
     end
     local ctrl = convert_ctrl_herdr(nvim_key)
+    if ctrl then
+      return ctrl
+    end
+  elseif mux == "rex" then
+    local rex_key = rex_keys[nvim_key]
+    if rex_key then
+      return rex_key
+    end
+    local ctrl = convert_ctrl_rex(nvim_key)
     if ctrl then
       return ctrl
     end
