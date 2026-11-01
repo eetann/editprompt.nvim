@@ -137,4 +137,51 @@ T["herdr"]["<C-c> converts to ctrl+c"] = function()
   end)
 end
 
+T["rex"] = MiniTest.new_set()
+
+T["rex"]["plain characters pass through unchanged"] = function()
+  with_mux("rex", function()
+    MiniTest.expect.equality(key_notation.convert("1"), "1")
+    MiniTest.expect.equality(key_notation.convert("a"), "a")
+    MiniTest.expect.equality(key_notation.convert("Z"), "Z")
+  end)
+end
+
+T["rex"]["special keys convert correctly"] = function()
+  with_mux("rex", function()
+    local cases = {
+      { "<CR>", "enter" },
+      { "<Tab>", "tab" },
+      { "<S-Tab>", "shift+tab" },
+      { "<Esc>", "escape" },
+      { "<BS>", "backspace" },
+      { "<Space>", "space" },
+      { "<Up>", "up" },
+      { "<Down>", "down" },
+      { "<Left>", "left" },
+      { "<Right>", "right" },
+    }
+
+    for _, case in ipairs(cases) do
+      MiniTest.expect.equality(key_notation.convert(case[1]), case[2])
+    end
+  end)
+end
+
+T["rex"]["<Esc> is spelled in full, unlike Herdr"] = function()
+  with_mux("rex", function()
+    MiniTest.expect.equality(key_notation.convert("<Esc>"), "escape")
+  end)
+  with_mux("herdr", function()
+    MiniTest.expect.equality(key_notation.convert("<Esc>"), "esc")
+  end)
+end
+
+T["rex"]["<C-c> converts to ctrl+c"] = function()
+  with_mux("rex", function()
+    MiniTest.expect.equality(key_notation.convert("<C-c>"), "ctrl+c")
+    MiniTest.expect.equality(key_notation.convert("<C-a>"), "ctrl+a")
+  end)
+end
+
 return T
