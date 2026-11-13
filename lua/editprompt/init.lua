@@ -170,31 +170,37 @@ end
 
 --[=[@doc
   category = "api"
-  name = "suggestion"
+  name = "pull"
   desc = """
-Insert Claude Code's prompt suggestions kept for the target panes.
-Executes `editprompt suggestion get`.
+Pull the draft typed in Claude Code's prompt box into the buffer, and clear the box.
+When nothing is typed, pull the prompt suggestion instead (it stays shown).
+Executes `editprompt pull`.
 Appends like `dump` and moves the cursor to the end of the buffer.
-Reading does not clear the suggestions. Notifies a warning if there is none.
+Notifies a warning if there is nothing to pull.
 """
+
+  [[args]]
+  name = "opts"
+  type = "table|nil"
+  desc = "`keep`: leave the draft in the prompt box"
 --]=]
-editprompt.suggestion = function()
-  require("editprompt.modes.suggestion").execute()
+editprompt.pull = function(opts)
+  require("editprompt.modes.pull").execute(opts)
 end
 
 --[=[@doc
   category = "api"
-  name = "suggestion_auto_send"
+  name = "pull_auto_send"
   desc = """
-Insert Claude Code's prompt suggestions, then send the whole buffer to the target pane.
-Executes `editprompt suggestion get` then `editprompt input --auto-send`.
+Pull the draft or the suggestion into the buffer, then send the whole buffer to the target pane.
+Executes `editprompt pull` then `editprompt input --auto-send`.
 Going through the buffer keeps the sent prompt in history.
-If the buffer already has a draft, the draft is sent together with the suggestions.
-Nothing is sent if there is no suggestion.
+If the buffer already has content, it is sent together with the pulled text.
+Nothing is sent if there is nothing to pull.
 """
 --]=]
-editprompt.suggestion_auto_send = function()
-  require("editprompt.modes.suggestion").execute_auto_send()
+editprompt.pull_auto_send = function()
+  require("editprompt.modes.pull").execute_auto_send()
 end
 
 --[=[@doc

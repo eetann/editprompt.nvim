@@ -49,43 +49,54 @@ local function reset()
   history._reset()
 end
 
-T["suggestion()"] = MiniTest.new_set({ hooks = { pre_case = reset } })
+T["pull()"] = MiniTest.new_set({ hooks = { pre_case = reset } })
 
-T["suggestion()"]["executes `suggestion get`"] = function()
-  with_stubs({ { code = 0, stdout = "next prompt", stderr = "" } }, function(calls)
+T["pull()"]["executes `pull`"] = function()
+  with_stubs({ { code = 0, stdout = "draft", stderr = "" } }, function(calls)
     create_buffer({})
 
-    editprompt.suggestion()
+    editprompt.pull()
     flush()
 
     MiniTest.expect.equality(#calls, 1)
-    MiniTest.expect.equality(calls[1].args, { "editprompt", "suggestion", "get" })
+    MiniTest.expect.equality(calls[1].args, { "editprompt", "pull" })
   end)
 end
 
-T["suggestion()"]["inserts suggestions into an empty buffer"] = function()
+T["pull()"]["passes --keep"] = function()
+  with_stubs({ { code = 0, stdout = "draft", stderr = "" } }, function(calls)
+    create_buffer({})
+
+    editprompt.pull({ keep = true })
+    flush()
+
+    MiniTest.expect.equality(calls[1].args, { "editprompt", "pull", "--keep" })
+  end)
+end
+
+T["pull()"]["inserts the pulled text into an empty buffer"] = function()
   with_stubs({
-    { code = 0, stdout = "first suggestion\nsecond suggestion", stderr = "" },
+    { code = 0, stdout = "first pane\nsecond pane", stderr = "" },
   }, function(_, notifications)
     local bufnr = create_buffer({})
 
-    editprompt.suggestion()
+    editprompt.pull()
     flush()
 
     MiniTest.expect.equality(
       vim.api.nvim_buf_get_lines(bufnr, 0, -1, false),
-      { "first suggestion", "second suggestion" }
+      { "first pane", "second pane" }
     )
     MiniTest.expect.equality(#notifications, 0)
   end)
 end
 
-T["suggestion()"]["appends after a blank line and moves the cursor to the end"] = function()
+T["pull()"]["appends after a blank line and moves the cursor to the end"] = function()
   with_stubs({ { code = 0, stdout = "next prompt\n", stderr = "" } }, function()
     local bufnr = create_buffer({ "draft", "second line" })
     vim.api.nvim_win_set_cursor(0, { 1, 0 })
 
-    editprompt.suggestion()
+    editprompt.pull()
     flush()
 
     MiniTest.expect.equality(
@@ -97,11 +108,11 @@ T["suggestion()"]["appends after a blank line and moves the cursor to the end"] 
   end)
 end
 
-T["suggestion()"]["warns and keeps the buffer when there is no suggestion"] = function()
+T["pull()"]["warns and keeps the buffer when there is nothing to pull"] = function()
   with_stubs({ { code = 0, stdout = "", stderr = "" } }, function(_, notifications)
     local bufnr = create_buffer({ "draft" })
 
-    editprompt.suggestion()
+    editprompt.pull()
     flush()
 
     MiniTest.expect.equality(
@@ -109,16 +120,16 @@ T["suggestion()"]["warns and keeps the buffer when there is no suggestion"] = fu
       { "draft" }
     )
     MiniTest.expect.equality(notifications, {
-      { msg = "No suggestion", level = vim.log.levels.WARN },
+      { msg = "Nothing to pull", level = vim.log.levels.WARN },
     })
   end)
 end
 
-T["suggestion()"]["notifies an error when the CLI fails"] = function()
+T["pull()"]["notifies an error when the CLI fails"] = function()
   with_stubs({ { code = 1, stdout = "", stderr = "boom" } }, function(_, notifications)
     local bufnr = create_buffer({})
 
-    editprompt.suggestion()
+    editprompt.pull()
     flush()
 
     MiniTest.expect.equality(vim.api.nvim_buf_get_lines(bufnr, 0, -1, false), { "" })
@@ -128,19 +139,20 @@ T["suggestion()"]["notifies an error when the CLI fails"] = function()
   end)
 end
 
-T["suggestion_auto_send()"] = MiniTest.new_set({ hooks = { pre_case = reset } })
+T["pull_auto_send()"] = MiniTest.new_set({ hooks = { pre_case = reset } })
 
-T["suggestion_auto_send()"]["sends the inserted suggestion and records it in history"] = function()
+T["pull_auto_send()"]["sends the pulled text and records it in history"] = function()
   with_stubs({
     { code = 0, stdout = "next prompt", stderr = "" },
     { code = 0, stdout = "", stderr = "" },
   }, function(calls)
     local bufnr = create_buffer({})
 
-    editprompt.suggestion_auto_send()
+    editprompt.pull_auto_send()
     flush()
 
     MiniTest.expect.equality(#calls, 2)
+    MiniTest.expect.equality(calls[1].args, { "editprompt", "pull" })
     MiniTest.expect.equality(calls[2].args, {
       "editprompt",
       "input",
@@ -153,25 +165,25 @@ T["suggestion_auto_send()"]["sends the inserted suggestion and records it in his
   end)
 end
 
-T["suggestion_auto_send()"]["sends the existing draft together with the suggestion"] = function()
+T["pull_auto_send()"]["sends the buffer content together with the pulled text"] = function()
   with_stubs({
     { code = 0, stdout = "next prompt", stderr = "" },
     { code = 0, stdout = "", stderr = "" },
   }, function(calls)
     create_buffer({ "draft" })
 
-    editprompt.suggestion_auto_send()
+    editprompt.pull_auto_send()
     flush()
 
     MiniTest.expect.equality(calls[2].args[#calls[2].args], "draft\n\nnext prompt")
   end)
 end
 
-T["suggestion_auto_send()"]["sends nothing when there is no suggestion"] = function()
+T["pull_auto_send()"]["sends nothing when there is nothing to pull"] = function()
   with_stubs({ { code = 0, stdout = "", stderr = "" } }, function(calls)
     local bufnr = create_buffer({ "draft" })
 
-    editprompt.suggestion_auto_send()
+    editprompt.pull_auto_send()
     flush()
 
     MiniTest.expect.equality(#calls, 1)
@@ -182,17 +194,17 @@ T["suggestion_auto_send()"]["sends nothing when there is no suggestion"] = funct
   end)
 end
 
-T[":Editprompt suggestion"] = MiniTest.new_set({ hooks = { pre_case = reset } })
+T[":Editprompt pull"] = MiniTest.new_set({ hooks = { pre_case = reset } })
 
-T[":Editprompt suggestion"]["inserts suggestions via the command"] = function()
+T[":Editprompt pull"]["inserts the pulled text via the command"] = function()
   with_stubs({ { code = 0, stdout = "next prompt", stderr = "" } }, function(calls)
     editprompt.setup()
     local bufnr = create_buffer({})
 
-    vim.cmd("Editprompt suggestion")
+    vim.cmd("Editprompt pull")
     flush()
 
-    MiniTest.expect.equality(#calls, 1)
+    MiniTest.expect.equality(calls[1].args, { "editprompt", "pull" })
     MiniTest.expect.equality(
       vim.api.nvim_buf_get_lines(bufnr, 0, -1, false),
       { "next prompt" }
@@ -200,7 +212,19 @@ T[":Editprompt suggestion"]["inserts suggestions via the command"] = function()
   end)
 end
 
-T[":Editprompt suggestion"]["sends right away with --auto-send"] = function()
+T[":Editprompt pull"]["passes --keep"] = function()
+  with_stubs({ { code = 0, stdout = "next prompt", stderr = "" } }, function(calls)
+    editprompt.setup()
+    create_buffer({})
+
+    vim.cmd("Editprompt pull --keep")
+    flush()
+
+    MiniTest.expect.equality(calls[1].args, { "editprompt", "pull", "--keep" })
+  end)
+end
+
+T[":Editprompt pull"]["sends right away with --auto-send"] = function()
   with_stubs({
     { code = 0, stdout = "next prompt", stderr = "" },
     { code = 0, stdout = "", stderr = "" },
@@ -208,11 +232,29 @@ T[":Editprompt suggestion"]["sends right away with --auto-send"] = function()
     editprompt.setup()
     create_buffer({})
 
-    vim.cmd("Editprompt suggestion --auto-send")
+    vim.cmd("Editprompt pull --auto-send")
     flush()
 
     MiniTest.expect.equality(#calls, 2)
     MiniTest.expect.equality(calls[2].args[3], "--auto-send")
+  end)
+end
+
+T[":Editprompt pull"]["rejects --keep with --auto-send"] = function()
+  with_stubs({}, function(calls, notifications)
+    editprompt.setup()
+    create_buffer({})
+
+    vim.cmd("Editprompt pull --keep --auto-send")
+    flush()
+
+    MiniTest.expect.equality(#calls, 0)
+    MiniTest.expect.equality(notifications, {
+      {
+        msg = "Editprompt: --keep cannot be used with --auto-send",
+        level = vim.log.levels.ERROR,
+      },
+    })
   end)
 end
 

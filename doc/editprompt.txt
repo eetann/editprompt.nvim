@@ -16,8 +16,8 @@ Table of Contents                               *editprompt-table-of-contents*
   - input                                           |editprompt-command-input|
   - press                                           |editprompt-command-press|
   - press_mode                                 |editprompt-command-press_mode|
+  - pull                                             |editprompt-command-pull|
   - stash                                           |editprompt-command-stash|
-  - suggestion                                 |editprompt-command-suggestion|
 6. API                                                        |editprompt-api|
   - dump                                                 |editprompt-api-dump|
   - history_list                                 |editprompt-api-history_list|
@@ -33,12 +33,12 @@ Table of Contents                               *editprompt-table-of-contents*
   - press_mode                                     |editprompt-api-press_mode|
   - press_mode_stop                           |editprompt-api-press_mode_stop|
   - press_sequence                             |editprompt-api-press_sequence|
+  - pull                                                 |editprompt-api-pull|
+  - pull_auto_send                             |editprompt-api-pull_auto_send|
   - setup                                               |editprompt-api-setup|
   - stash_pop                                       |editprompt-api-stash_pop|
   - stash_pop_latest                         |editprompt-api-stash_pop_latest|
   - stash_push                                     |editprompt-api-stash_push|
-  - suggestion                                     |editprompt-api-suggestion|
-  - suggestion_auto_send                 |editprompt-api-suggestion_auto_send|
 
 ==============================================================================
 1. Features                                              *editprompt-features*
@@ -48,7 +48,7 @@ Table of Contents                               *editprompt-table-of-contents*
 - Navigate previously sent prompts from history
 - List and insert prompts from history via picker UI
 - Dump output from editprompt CLI into buffer
-- Insert Claude Code’s prompt suggestions into buffer
+- Pull the draft or the suggestion from Claude Code’s prompt box into buffer
 - Stash/restore buffer content with picker UI
 - Send key inputs to target pane (press mode for continuous input)
 
@@ -86,8 +86,8 @@ with lazy.nvim <https://github.com/folke/lazy.nvim>
         { "<Space>en", "<Cmd>Editprompt history next<CR>" },
         { "<Space>eh", "<Cmd>Editprompt history list<CR>" },
         { "<Space>ed", "<Cmd>Editprompt dump<CR>" },
-        { "<Space>eg", "<Cmd>Editprompt suggestion<CR>" },
-        { "<Space>eG", "<Cmd>Editprompt suggestion --auto-send<CR>" },
+        { "<Space>eu", "<Cmd>Editprompt pull<CR>" },
+        { "<Space>eU", "<Cmd>Editprompt pull --auto-send<CR>" },
         { "<Space>es", "<Cmd>Editprompt stash pop<CR>" },
         { "<Space>eS", "<Cmd>Editprompt stash push<CR>" },
         { "<Space>ek", "<Cmd>Editprompt press_mode<CR>" },
@@ -303,6 +303,27 @@ Enter press mode for continuous key sending
 _No arguments_  
 
 
+PULL                                                 *editprompt-command-pull*
+
+>
+    :Editprompt pull
+<
+
+Pull the draft (or the suggestion) from Claude Code’s prompt box into the
+buffer
+
+  -----------------------------------------------------------------------
+  Name                   Description
+  ---------------------- ------------------------------------------------
+  –keep                  Leave the draft in the prompt box
+
+  –auto-send             Insert into the buffer, then send the whole
+                         buffer to target pane (cannot be used with
+                         –keep)
+  -----------------------------------------------------------------------
+ 
+
+
 STASH                                               *editprompt-command-stash*
 
 >
@@ -316,25 +337,6 @@ Stash operations (push/pop/drop)
   ---------------------- ------------------------------------------------
   push|pop|drop          push: save buffer to stash, pop: restore from
                          stash, drop: delete from stash
-
-  -----------------------------------------------------------------------
- 
-
-
-SUGGESTION                                     *editprompt-command-suggestion*
-
->
-    :Editprompt suggestion
-<
-
-Insert Claude Code’s prompt suggestions kept by editprompt CLI (–auto-send
-to send them right away)
-
-  -----------------------------------------------------------------------
-  Name                   Description
-  ---------------------- ------------------------------------------------
-  –auto-send             Insert into the buffer, then send the whole
-                         buffer to target pane
 
   -----------------------------------------------------------------------
  
@@ -484,6 +486,30 @@ instead of a pasted newline.
  
 
 
+PULL                                                     *editprompt-api-pull*
+
+Pull the draft typed in Claude Code’s prompt box into the buffer, and clear
+the box. When nothing is typed, pull the prompt suggestion instead (it stays
+shown). Executes `editprompt pull`. Appends like `dump` and moves the cursor to
+the end of the buffer. Notifies a warning if there is nothing to pull.
+
+  Name   Type        Description
+  ------ ----------- ---------------------------------------
+  opts   table|nil   keepleave the draft in the prompt box
+ 
+
+
+PULL_AUTO_SEND                                 *editprompt-api-pull_auto_send*
+
+Pull the draft or the suggestion into the buffer, then send the whole buffer to
+the target pane. Executes `editprompt pull` then `editprompt input
+--auto-send`. Going through the buffer keeps the sent prompt in history. If the
+buffer already has content, it is sent together with the pulled text. Nothing
+is sent if there is nothing to pull.
+
+_No arguments_  
+
+
 SETUP                                                   *editprompt-api-setup*
 
 >lua
@@ -517,27 +543,6 @@ _No arguments_  
 STASH_PUSH                                         *editprompt-api-stash_push*
 
 Push buffer content to stash. Executes `editprompt stash push`.
-
-_No arguments_  
-
-
-SUGGESTION                                         *editprompt-api-suggestion*
-
-Insert Claude Code’s prompt suggestions kept for the target panes. Executes
-`editprompt suggestion get`. Appends like `dump` and moves the cursor to the
-end of the buffer. Reading does not clear the suggestions. Notifies a warning
-if there is none.
-
-_No arguments_  
-
-
-SUGGESTION_AUTO_SEND                     *editprompt-api-suggestion_auto_send*
-
-Insert Claude Code’s prompt suggestions, then send the whole buffer to the
-target pane. Executes `editprompt suggestion get` then `editprompt input
---auto-send`. Going through the buffer keeps the sent prompt in history. If the
-buffer already has a draft, the draft is sent together with the suggestions.
-Nothing is sent if there is no suggestion.
 
 _No arguments_  
 

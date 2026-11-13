@@ -95,23 +95,38 @@ local subcmd_tbl = {
   },
   --[=[@doc
   category = "command"
-  name = "suggestion"
-  desc = "Insert Claude Code's prompt suggestions kept by editprompt CLI (--auto-send to send them right away)"
+  name = "pull"
+  desc = "Pull the draft (or the suggestion) from Claude Code's prompt box into the buffer"
+
+  [[args]]
+  name = "--keep"
+  desc = "Leave the draft in the prompt box"
 
   [[args]]
   name = "--auto-send"
-  desc = "Insert into the buffer, then send the whole buffer to target pane"
+  desc = "Insert into the buffer, then send the whole buffer to target pane (cannot be used with --keep)"
   --]=]
-  suggestion = {
+  pull = {
     impl = function(args)
-      if vim.tbl_contains(args, "--auto-send") then
-        require("editprompt.modes.suggestion").execute_auto_send()
+      local has_keep = vim.tbl_contains(args, "--keep")
+      local has_auto_send = vim.tbl_contains(args, "--auto-send")
+
+      if has_keep and has_auto_send then
+        vim.notify(
+          "Editprompt: --keep cannot be used with --auto-send",
+          vim.log.levels.ERROR
+        )
+      elseif has_auto_send then
+        require("editprompt.modes.pull").execute_auto_send()
       else
-        require("editprompt.modes.suggestion").execute()
+        require("editprompt.modes.pull").execute({ keep = has_keep })
       end
     end,
     complete = function(subcmd_arg_lead)
-      return CommandRegister.get_complete(subcmd_arg_lead, { "--auto-send" })
+      return CommandRegister.get_complete(
+        subcmd_arg_lead,
+        { "--keep", "--auto-send" }
+      )
     end,
   },
   --[=[@doc

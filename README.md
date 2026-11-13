@@ -9,7 +9,7 @@
 - Navigate previously sent prompts from history
 - List and insert prompts from history via picker UI
 - Dump output from editprompt CLI into buffer
-- Insert Claude Code's prompt suggestions into buffer
+- Pull the draft or the suggestion from Claude Code's prompt box into buffer
 - Stash/restore buffer content with picker UI
 - Send key inputs to target pane (press mode for continuous input)
 
@@ -43,8 +43,8 @@ with [lazy.nvim](https://github.com/folke/lazy.nvim)
     { "<Space>en", "<Cmd>Editprompt history next<CR>" },
     { "<Space>eh", "<Cmd>Editprompt history list<CR>" },
     { "<Space>ed", "<Cmd>Editprompt dump<CR>" },
-    { "<Space>eg", "<Cmd>Editprompt suggestion<CR>" },
-    { "<Space>eG", "<Cmd>Editprompt suggestion --auto-send<CR>" },
+    { "<Space>eu", "<Cmd>Editprompt pull<CR>" },
+    { "<Space>eU", "<Cmd>Editprompt pull --auto-send<CR>" },
     { "<Space>es", "<Cmd>Editprompt stash pop<CR>" },
     { "<Space>eS", "<Cmd>Editprompt stash push<CR>" },
     { "<Space>ek", "<Cmd>Editprompt press_mode<CR>" },
@@ -246,6 +246,22 @@ _No arguments_
 &nbsp;
 
 
+### pull
+```
+:Editprompt pull
+```
+
+Pull the draft (or the suggestion) from Claude Code's prompt box into the buffer
+
+
+| Name | Description |
+|------|-------------|
+| --keep | Leave the draft in the prompt box |
+| --auto-send | Insert into the buffer, then send the whole buffer to target pane (cannot be used with --keep) |
+
+&nbsp;
+
+
 ### stash
 ```
 :Editprompt stash
@@ -257,21 +273,6 @@ Stash operations (push/pop/drop)
 | Name | Description |
 |------|-------------|
 | push\|pop\|drop | push: save buffer to stash, pop: restore from stash, drop: delete from stash |
-
-&nbsp;
-
-
-### suggestion
-```
-:Editprompt suggestion
-```
-
-Insert Claude Code's prompt suggestions kept by editprompt CLI (--auto-send to send them right away)
-
-
-| Name | Description |
-|------|-------------|
-| --auto-send | Insert into the buffer, then send the whole buffer to target pane |
 
 &nbsp;
 
@@ -416,6 +417,32 @@ a trailing `<CR>` as a submit instead of a pasted newline.
 &nbsp;
 
 
+### pull
+Pull the draft typed in Claude Code's prompt box into the buffer, and clear the box.
+When nothing is typed, pull the prompt suggestion instead (it stays shown).
+Executes `editprompt pull`.
+Appends like `dump` and moves the cursor to the end of the buffer.
+Notifies a warning if there is nothing to pull.
+
+
+| Name | Type | Description |
+|------|------|-------------|
+| opts | table\|nil | `keep`: leave the draft in the prompt box |
+
+&nbsp;
+
+
+### pull_auto_send
+Pull the draft or the suggestion into the buffer, then send the whole buffer to the target pane.
+Executes `editprompt pull` then `editprompt input --auto-send`.
+Going through the buffer keeps the sent prompt in history.
+If the buffer already has content, it is sent together with the pulled text.
+Nothing is sent if there is nothing to pull.
+
+_No arguments_
+&nbsp;
+
+
 ### setup
 ```lua
 editprompt.setup({...})
@@ -449,27 +476,6 @@ _No arguments_
 ### stash_push
 Push buffer content to stash.
 Executes `editprompt stash push`.
-
-_No arguments_
-&nbsp;
-
-
-### suggestion
-Insert Claude Code's prompt suggestions kept for the target panes.
-Executes `editprompt suggestion get`.
-Appends like `dump` and moves the cursor to the end of the buffer.
-Reading does not clear the suggestions. Notifies a warning if there is none.
-
-_No arguments_
-&nbsp;
-
-
-### suggestion_auto_send
-Insert Claude Code's prompt suggestions, then send the whole buffer to the target pane.
-Executes `editprompt suggestion get` then `editprompt input --auto-send`.
-Going through the buffer keeps the sent prompt in history.
-If the buffer already has a draft, the draft is sent together with the suggestions.
-Nothing is sent if there is no suggestion.
 
 _No arguments_
 &nbsp;

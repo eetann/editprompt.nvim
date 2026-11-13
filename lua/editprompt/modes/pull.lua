@@ -3,6 +3,9 @@ local utils = require("editprompt.utils")
 
 local M = {}
 
+---@class editprompt.PullOpts
+---@field keep? boolean leave the draft in the agent's prompt box
+
 --- Move the cursor to the end of the current buffer
 local function move_cursor_to_end()
   local line_count = vim.api.nvim_buf_line_count(0)
@@ -10,11 +13,15 @@ local function move_cursor_to_end()
   vim.api.nvim_win_set_cursor(0, { line_count, #last_line })
 end
 
---- Insert prompt suggestions kept by editprompt CLI into the current buffer
----@param on_inserted? fun() called after the suggestions are inserted
-local function insert(on_inserted)
+--- Pull the prompt box content of the target panes into the current buffer
+---@param opts editprompt.PullOpts
+---@param on_inserted? fun() called after the pulled text is inserted
+local function pull(opts, on_inserted)
   local args = vim.deepcopy(config.get_cmd())
-  vim.list_extend(args, { "suggestion", "get" })
+  vim.list_extend(args, { "pull" })
+  if opts.keep then
+    table.insert(args, "--keep")
+  end
 
   vim.system(args, { text = true }, function(result)
     vim.schedule(function()
@@ -25,9 +32,9 @@ local function insert(on_inserted)
       end
 
       local output = (result.stdout or ""):gsub("\n$", "")
-      -- No suggestion is a normal state, so warn instead of raising an error
+      -- An empty prompt box without a suggestion is a normal state
       if output == "" then
-        vim.notify("No suggestion", vim.log.levels.WARN)
+        vim.notify("Nothing to pull", vim.log.levels.WARN)
         return
       end
 
@@ -41,15 +48,17 @@ local function insert(on_inserted)
   end)
 end
 
---- Insert suggestions and leave the cursor at the end of the buffer
-function M.execute()
-  insert()
+--- Pull the draft or the suggestion and leave the cursor at the end of the buffer
+---@param opts? editprompt.PullOpts
+function M.execute(opts)
+  pull(opts or {})
 end
 
---- Insert suggestions, then send the whole buffer to the target pane.
+--- Pull the draft or the suggestion, then send the whole buffer to the target pane.
 --- Sending through the buffer keeps the prompt in history like `input --auto-send`.
+--- The draft is always cleared from the prompt box, otherwise sending would duplicate it.
 function M.execute_auto_send()
-  insert(function()
+  pull({ keep = false }, function()
     require("editprompt.modes.input").execute_auto_send()
   end)
 end
