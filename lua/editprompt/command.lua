@@ -95,6 +95,27 @@ local subcmd_tbl = {
   },
   --[=[@doc
   category = "command"
+  name = "suggestion"
+  desc = "Insert Claude Code's prompt suggestions kept by editprompt CLI (--auto-send to send them right away)"
+
+  [[args]]
+  name = "--auto-send"
+  desc = "Insert into the buffer, then send the whole buffer to target pane"
+  --]=]
+  suggestion = {
+    impl = function(args)
+      if vim.tbl_contains(args, "--auto-send") then
+        require("editprompt.modes.suggestion").execute_auto_send()
+      else
+        require("editprompt.modes.suggestion").execute()
+      end
+    end,
+    complete = function(subcmd_arg_lead)
+      return CommandRegister.get_complete(subcmd_arg_lead, { "--auto-send" })
+    end,
+  },
+  --[=[@doc
+  category = "command"
   name = "press"
   desc = "Send a key to target pane without Enter"
 

@@ -9,6 +9,7 @@
 - Navigate previously sent prompts from history
 - List and insert prompts from history via picker UI
 - Dump output from editprompt CLI into buffer
+- Insert Claude Code's prompt suggestions into buffer
 - Stash/restore buffer content with picker UI
 - Send key inputs to target pane (press mode for continuous input)
 
@@ -42,6 +43,8 @@ with [lazy.nvim](https://github.com/folke/lazy.nvim)
     { "<Space>en", "<Cmd>Editprompt history next<CR>" },
     { "<Space>eh", "<Cmd>Editprompt history list<CR>" },
     { "<Space>ed", "<Cmd>Editprompt dump<CR>" },
+    { "<Space>eg", "<Cmd>Editprompt suggestion<CR>" },
+    { "<Space>eG", "<Cmd>Editprompt suggestion --auto-send<CR>" },
     { "<Space>es", "<Cmd>Editprompt stash pop<CR>" },
     { "<Space>eS", "<Cmd>Editprompt stash push<CR>" },
     { "<Space>ek", "<Cmd>Editprompt press_mode<CR>" },
@@ -257,6 +260,21 @@ Stash operations (push/pop/drop)
 
 &nbsp;
 
+
+### suggestion
+```
+:Editprompt suggestion
+```
+
+Insert Claude Code's prompt suggestions kept by editprompt CLI (--auto-send to send them right away)
+
+
+| Name | Description |
+|------|-------------|
+| --auto-send | Insert into the buffer, then send the whole buffer to target pane |
+
+&nbsp;
+
 <!-- auto-generate-e:command -->
 
 ## API
@@ -431,6 +449,27 @@ _No arguments_
 ### stash_push
 Push buffer content to stash.
 Executes `editprompt stash push`.
+
+_No arguments_
+&nbsp;
+
+
+### suggestion
+Insert Claude Code's prompt suggestions kept for the target panes.
+Executes `editprompt suggestion get`.
+Appends like `dump` and moves the cursor to the end of the buffer.
+Reading does not clear the suggestions. Notifies a warning if there is none.
+
+_No arguments_
+&nbsp;
+
+
+### suggestion_auto_send
+Insert Claude Code's prompt suggestions, then send the whole buffer to the target pane.
+Executes `editprompt suggestion get` then `editprompt input --auto-send`.
+Going through the buffer keeps the sent prompt in history.
+If the buffer already has a draft, the draft is sent together with the suggestions.
+Nothing is sent if there is no suggestion.
 
 _No arguments_
 &nbsp;

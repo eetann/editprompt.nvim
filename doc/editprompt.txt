@@ -1,4 +1,4 @@
-*editprompt.txt*           For NVIM v0.10.0          Last change: 2026 July 31
+*editprompt.txt*         For NVIM v0.10.0        Last change: 2026 November 13
 
 ==============================================================================
 Table of Contents                               *editprompt-table-of-contents*
@@ -17,6 +17,7 @@ Table of Contents                               *editprompt-table-of-contents*
   - press                                           |editprompt-command-press|
   - press_mode                                 |editprompt-command-press_mode|
   - stash                                           |editprompt-command-stash|
+  - suggestion                                 |editprompt-command-suggestion|
 6. API                                                        |editprompt-api|
   - dump                                                 |editprompt-api-dump|
   - history_list                                 |editprompt-api-history_list|
@@ -31,10 +32,13 @@ Table of Contents                               *editprompt-table-of-contents*
   - press                                               |editprompt-api-press|
   - press_mode                                     |editprompt-api-press_mode|
   - press_mode_stop                           |editprompt-api-press_mode_stop|
+  - press_sequence                             |editprompt-api-press_sequence|
   - setup                                               |editprompt-api-setup|
   - stash_pop                                       |editprompt-api-stash_pop|
   - stash_pop_latest                         |editprompt-api-stash_pop_latest|
   - stash_push                                     |editprompt-api-stash_push|
+  - suggestion                                     |editprompt-api-suggestion|
+  - suggestion_auto_send                 |editprompt-api-suggestion_auto_send|
 
 ==============================================================================
 1. Features                                              *editprompt-features*
@@ -44,6 +48,7 @@ Table of Contents                               *editprompt-table-of-contents*
 - Navigate previously sent prompts from history
 - List and insert prompts from history via picker UI
 - Dump output from editprompt CLI into buffer
+- Insert Claude Code’s prompt suggestions into buffer
 - Stash/restore buffer content with picker UI
 - Send key inputs to target pane (press mode for continuous input)
 
@@ -81,6 +86,8 @@ with lazy.nvim <https://github.com/folke/lazy.nvim>
         { "<Space>en", "<Cmd>Editprompt history next<CR>" },
         { "<Space>eh", "<Cmd>Editprompt history list<CR>" },
         { "<Space>ed", "<Cmd>Editprompt dump<CR>" },
+        { "<Space>eg", "<Cmd>Editprompt suggestion<CR>" },
+        { "<Space>eG", "<Cmd>Editprompt suggestion --auto-send<CR>" },
         { "<Space>es", "<Cmd>Editprompt stash pop<CR>" },
         { "<Space>eS", "<Cmd>Editprompt stash push<CR>" },
         { "<Space>ek", "<Cmd>Editprompt press_mode<CR>" },
@@ -140,7 +147,21 @@ Use a prefix key to avoid conflicts with normal editing:
     }
 <
 
-**Pattern 3: Press mode**
+**Pattern 3: Text followed by Enter**
+
+Send a short reply and submit it with one key. Use `press_sequence` rather than
+two `press` calls: each `press` spawns its own process chain, so the `<CR>` can
+overtake the text and reach the pane first. `delay` keeps them apart in time as
+well, which TUIs such as codex need to read the `<CR>` as a submit instead of a
+pasted newline.
+
+>lua
+    keys = {
+      { "<C-o>", function() require("editprompt").press_sequence({ "ok", "<CR>" }, { delay = 100 }) end },
+    }
+<
+
+**Pattern 4: Press mode**
 
 Enter press mode where all keys are forwarded to the target pane. Press `q` to
 exit (configurable via `press_mode.exit_key`). Double-press `q` to send `q`
@@ -300,6 +321,25 @@ Stash operations (push/pop/drop)
  
 
 
+SUGGESTION                                     *editprompt-command-suggestion*
+
+>
+    :Editprompt suggestion
+<
+
+Insert Claude Code’s prompt suggestions kept by editprompt CLI (–auto-send
+to send them right away)
+
+  -----------------------------------------------------------------------
+  Name                   Description
+  ---------------------- ------------------------------------------------
+  –auto-send             Insert into the buffer, then send the whole
+                         buffer to target pane
+
+  -----------------------------------------------------------------------
+ 
+
+
 ==============================================================================
 6. API                                                        *editprompt-api*
 
@@ -400,6 +440,9 @@ multiplexer format.
   key               string            Key to send in Neovim notation
                                       (e.g., ‘1’, ‘’, ‘’, ‘’)
 
+  opts              table|nil         delayms to wait before delivering
+                                      the key. on_donecalled once it
+                                      arrived
   ------------------------------------------------------------------------
  
 
@@ -418,6 +461,27 @@ PRESS_MODE_STOP                               *editprompt-api-press_mode_stop*
 Exit press mode.
 
 _No arguments_  
+
+
+PRESS_SEQUENCE                                 *editprompt-api-press_sequence*
+
+Send keys in order, starting each key only after the previous one arrived. Use
+this instead of calling `press` several times in a row: independent `press`
+calls each spawn their own process chain, so a key launched later can overtake
+an earlier one and reach the pane first. `delay` also keeps a gap between the
+keys, which TUIs such as codex need to read a trailing `<CR>` as a submit
+instead of a pasted newline.
+
+  ------------------------------------------------------------------------
+  Name              Type              Description
+  ----------------- ----------------- ------------------------------------
+  keys              string[]          Keys to send in Neovim notation
+                                      (e.g., { ‘ok’, ‘’ })
+
+  opts              table|nil         delaymilliseconds to separate each
+                                      key from the previous one
+  ------------------------------------------------------------------------
+ 
 
 
 SETUP                                                   *editprompt-api-setup*
@@ -453,6 +517,27 @@ _No arguments_  
 STASH_PUSH                                         *editprompt-api-stash_push*
 
 Push buffer content to stash. Executes `editprompt stash push`.
+
+_No arguments_  
+
+
+SUGGESTION                                         *editprompt-api-suggestion*
+
+Insert Claude Code’s prompt suggestions kept for the target panes. Executes
+`editprompt suggestion get`. Appends like `dump` and moves the cursor to the
+end of the buffer. Reading does not clear the suggestions. Notifies a warning
+if there is none.
+
+_No arguments_  
+
+
+SUGGESTION_AUTO_SEND                     *editprompt-api-suggestion_auto_send*
+
+Insert Claude Code’s prompt suggestions, then send the whole buffer to the
+target pane. Executes `editprompt suggestion get` then `editprompt input
+--auto-send`. Going through the buffer keeps the sent prompt in history. If the
+buffer already has a draft, the draft is sent together with the suggestions.
+Nothing is sent if there is no suggestion.
 
 _No arguments_  
 

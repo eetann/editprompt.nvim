@@ -170,6 +170,35 @@ end
 
 --[=[@doc
   category = "api"
+  name = "suggestion"
+  desc = """
+Insert Claude Code's prompt suggestions kept for the target panes.
+Executes `editprompt suggestion get`.
+Appends like `dump` and moves the cursor to the end of the buffer.
+Reading does not clear the suggestions. Notifies a warning if there is none.
+"""
+--]=]
+editprompt.suggestion = function()
+  require("editprompt.modes.suggestion").execute()
+end
+
+--[=[@doc
+  category = "api"
+  name = "suggestion_auto_send"
+  desc = """
+Insert Claude Code's prompt suggestions, then send the whole buffer to the target pane.
+Executes `editprompt suggestion get` then `editprompt input --auto-send`.
+Going through the buffer keeps the sent prompt in history.
+If the buffer already has a draft, the draft is sent together with the suggestions.
+Nothing is sent if there is no suggestion.
+"""
+--]=]
+editprompt.suggestion_auto_send = function()
+  require("editprompt.modes.suggestion").execute_auto_send()
+end
+
+--[=[@doc
+  category = "api"
   name = "stash_push"
   desc = """
 Push buffer content to stash.
